@@ -23,7 +23,8 @@
     "my-next-app": "file:",
     "next": "14.2.13",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-hot-toast": "^2.5.2"
   },
   "devDependencies": {
     "@types/jwt-decode": "^2.2.1",

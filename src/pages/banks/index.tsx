@@ -6,6 +6,7 @@ import ConfirmDialog from "../../app/components/ConfirmDialog";
 import { Bank } from "../../app/types";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
 import { updateBank } from "../../app/services/api"; // Importa la función que realiza la solicitud al backend
+import toast from "react-hot-toast";
 
 const Banks: React.FC = () => {
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -15,10 +16,6 @@ const Banks: React.FC = () => {
   const [bankToEdit, setBankToEdit] = useState<Bank | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>(""); // Para el término de búsqueda
-  const [message, setMessage] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<"success" | "error">(
-    "success"
-  );
 
   useEffect(() => {
     getBanks()
@@ -32,23 +29,13 @@ const Banks: React.FC = () => {
       .catch((error) => console.error("Error al obtener los bancos:", error));
   }, []);
 
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => {
-        setMessage(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
-
   const handleAddBank = (data: Omit<Bank, "banco_id">) => {
     const bancoExistente = banks.find(
       (bank) => bank.nombre.toLowerCase() === data.nombre.toLowerCase()
     );
 
     if (bancoExistente) {
-      setMessage("Ya existe un banco con este nombre.");
-      setMessageType("error");
+      toast.error("Ya existe un banco con este nombre.");
       return;
     }
 
@@ -56,13 +43,11 @@ const Banks: React.FC = () => {
       .then((response) => {
         setBanks((prev) => [...prev, response.data]);
         setFilteredBanks((prev) => [...prev, response.data]);
-        setMessage("Banco agregado con éxito");
-        setMessageType("success");
+        toast.success("Banco agregado con éxito");
       })
       .catch((error) => {
         const msg = error.response?.data?.error || "Error al agregar banco";
-        setMessage(msg);
-        setMessageType("error");
+        toast.error(msg);
       });
   };
 
@@ -81,13 +66,11 @@ const Banks: React.FC = () => {
           setBanks(updatedBanks);
           setFilteredBanks(updatedBanks);
           setOpenConfirmDialog(false);
-          setMessage("Banco eliminado con éxito");
-          setMessageType("success");
+          toast.success("Banco eliminado con éxito");
         })
         .catch((error) => {
           const msg = error.response?.data || "Error al eliminar el banco";
-          setMessage(msg);
-          setMessageType("error");
+          toast.error(msg);
         });
     }
   };
@@ -106,8 +89,7 @@ const Banks: React.FC = () => {
     );
 
     if (bancoExistente) {
-      setMessage("Ya existe otro banco con este nombre.");
-      setMessageType("error");
+      toast.error("Ya existe otro banco con este nombre.");
       return;
     }
 
@@ -115,21 +97,17 @@ const Banks: React.FC = () => {
       .then(() => {
         setBankToEdit(null);
         setOpenEditDialog(false);
-
-        // Refrescar bancos en UI
         setBanks((prev) =>
           prev.map((bnk) => (bnk.banco_id === data.banco_id ? data : bnk))
         );
         setFilteredBanks((prev) =>
           prev.map((bnk) => (bnk.banco_id === data.banco_id ? data : bnk))
         );
-        setMessage("Banco actualizado con éxito");
-        setMessageType("success");
+        toast.success("Banco actualizado con éxito");
       })
       .catch((error) => {
         const msg = error.response?.data || "Error al actualizar el banco";
-        setMessage(msg);
-        setMessageType("error");
+        toast.error(msg);
       });
   };
 
@@ -149,17 +127,6 @@ const Banks: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4">
-      {/* Alerta */}
-      {message && (
-        <div
-          className={`fixed top-4 right-4 z-50 p-3 rounded shadow-md text-white ${
-            messageType === "error" ? "bg-red-500" : "bg-green-500"
-          }`}
-        >
-          {message}
-        </div>
-      )}
-
       {/* Ajustamos el ancho y centramos */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Bancos</h1>

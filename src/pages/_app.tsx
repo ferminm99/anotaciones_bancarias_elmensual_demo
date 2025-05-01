@@ -3,6 +3,7 @@ import { AppProps } from "next/app";
 import "../app/globals.css";
 import Sidebar from "../app/components/Layout/Sidebar";
 import "/dist/output.css";
+import { Toaster } from "react-hot-toast";
 
 function MyApp({ Component, pageProps }: AppProps) {
   // const router = useRouter();
@@ -39,6 +40,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <Sidebar>
+      <Toaster position="top-right" />
       {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
         <div
           style={{
