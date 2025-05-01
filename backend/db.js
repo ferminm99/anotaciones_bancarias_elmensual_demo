@@ -17,4 +17,6 @@ pool.connect((err) => {
   }
 });
 
-module.exports = pool;
+module.exports = {
+  query: (...args) => pool.query(...args), // 👈 exportás solo la función query
+};
