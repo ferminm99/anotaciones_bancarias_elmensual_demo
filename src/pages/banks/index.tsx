@@ -149,6 +149,7 @@ const Banks: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4">
+      {/* Alerta */}
       {message && (
         <div
           className={`fixed top-4 right-4 z-50 p-3 rounded shadow-md text-white ${
@@ -157,7 +158,8 @@ const Banks: React.FC = () => {
         >
           {message}
         </div>
-      )}{" "}
+      )}
+
       {/* Ajustamos el ancho y centramos */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Bancos</h1>
