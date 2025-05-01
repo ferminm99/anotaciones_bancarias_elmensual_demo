@@ -79,19 +79,19 @@ export const getCheques = () => {
 };
 
 //autenticacion
-// export const login = async (
-//   username: string,
-//   password: string
-// ): Promise<string> => {
-//   try {
-//     const response = await api.post("/auth/login", { username, password });
-//     console.log("Response from backend:", response.data); // Verifica la respuesta del backend
-//     return response.data.token; // Asegúrate de que `token` exista en la respuesta del backend
-//   } catch (error) {
-//     console.error("Error en la autenticación:", error);
-//     throw new Error("Error en la autenticación");
-//   }
-// };
+export const login = async (
+  username: string,
+  password: string
+): Promise<string> => {
+  try {
+    const response = await api.post("/auth/login", { username, password });
+    console.log("Response from backend:", response.data); // Verifica la respuesta del backend
+    return response.data.token; // Asegúrate de que `token` exista en la respuesta del backend
+  } catch (error) {
+    console.error("Error en la autenticación:", error);
+    throw new Error("Error en la autenticación");
+  }
+};
 
 //Interceptor para proteger solicitudes
 // api.interceptors.request.use((config) => {
