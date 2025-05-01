@@ -8,14 +8,14 @@ const pool = new Pool({
       : false, // SSL solo en producción
 });
 
-pool.connect((err) => {
-  if (err) {
-    console.error("Error al conectar a PostgreSQL:", err);
-  } else {
-    console.log("Conectado a PostgreSQL");
-    // Aquí defines las rutas
-  }
-});
+// pool.connect((err) => {
+//   if (err) {
+//     console.error("Error al conectar a PostgreSQL:", err);
+//   } else {
+//     console.log("Conectado a PostgreSQL");
+//     // Aquí defines las rutas
+//   }
+// });
 
 module.exports = {
   query: (...args) => pool.query(...args), // 👈 exportás solo la función query
