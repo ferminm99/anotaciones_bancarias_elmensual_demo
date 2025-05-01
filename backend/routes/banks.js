@@ -4,16 +4,22 @@ const router = express.Router();
 const connection = require("../db");
 
 // Ruta para obtener todos los bancos
-router.get("/", async (req, res) => {
-  try {
-    console.log("📥 GET /bancos llamado");
-    const result = await connection.query("SELECT * FROM bancos");
-    console.log("📤 Resultados:", result.rows);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("❌ Error al obtener bancos:", err);
-    res.status(500).json({ error: "Error al obtener bancos" });
-  }
+router.get("/", (req, res) => {
+  const query = "SELECT * FROM bancos";
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error("Error al obtener bancos:", err);
+      return res.status(500).send("Error al obtener bancos");
+    }
+
+    console.log("Resultados de bancos:", results);
+
+    if (!results || !results.rows) {
+      return res.status(500).send("Formato inesperado de respuesta");
+    }
+
+    res.json(results.rows);
+  });
 });
 
 // Ruta para agregar un banco
