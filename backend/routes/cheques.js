@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Asumo que este archivo ya contiene la conexión a PostgreSQL
-
+const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 // Ruta para obtener todos los cheques
 router.get("/", (req, res) => {
   const query = "SELECT * FROM cheques";
@@ -16,7 +16,7 @@ router.get("/", (req, res) => {
 });
 
 // Ruta para agregar un nuevo cheque
-router.post("/", (req, res) => {
+router.post("/", limitarAccionesDemo, (req, res) => {
   const { numero } = req.body;
   if (!numero) {
     res.status(400).send("Número de cheque es requerido");

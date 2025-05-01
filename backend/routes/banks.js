@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
+const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 
 // Ruta para obtener todos los bancos
 router.get("/", (req, res) => {
@@ -24,7 +25,7 @@ router.get("/", (req, res) => {
 
 // Ruta para agregar un banco
 // Ruta para agregar un banco
-router.post("/", (req, res) => {
+router.post("/", limitarAccionesDemo, (req, res) => {
   const { nombre, saldo_total } = req.body;
 
   if (!nombre || saldo_total == null) {
@@ -63,7 +64,7 @@ router.post("/", (req, res) => {
 });
 
 // Ruta para actualizar un banco
-router.put("/:id", (req, res) => {
+router.put("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
   const { nombre, saldo_total } = req.body;
 
@@ -100,7 +101,7 @@ router.put("/:id", (req, res) => {
 });
 
 // Ruta para eliminar un banco
-router.delete("/:id", (req, res) => {
+router.delete("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM bancos WHERE banco_id = $1";
   connection.query(query, [id], (err, result) => {

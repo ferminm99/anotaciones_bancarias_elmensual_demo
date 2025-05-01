@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-
+const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 // Ruta para obtener todas las transacciones
 router.get("/", (req, res) => {
   const query = `
@@ -33,7 +33,7 @@ router.get("/", (req, res) => {
 });
 
 // Ruta para agregar una nueva transacción
-router.post("/", (req, res) => {
+router.post("/", limitarAccionesDemo, (req, res) => {
   const {
     fecha,
     nombre_cliente,
@@ -228,7 +228,7 @@ router.post("/", (req, res) => {
   }
 });
 
-router.put("/:transaccion_id", (req, res) => {
+router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
   const { transaccion_id } = req.params;
   const {
     fecha,
@@ -416,7 +416,7 @@ router.put("/:transaccion_id", (req, res) => {
 });
 
 // Ruta para eliminar una transacción
-router.delete("/:id", (req, res) => {
+router.delete("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
 
   const query =
