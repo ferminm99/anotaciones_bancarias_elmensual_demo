@@ -79,68 +79,56 @@ export const getCheques = () => {
 };
 
 //autenticacion
-export const login = async (
-  username: string,
-  password: string
-): Promise<string> => {
-  try {
-    const response = await api.post("/auth/login", { username, password });
-    console.log("Response from backend:", response.data); // Verifica la respuesta del backend
-    return response.data.token; // Asegúrate de que `token` exista en la respuesta del backend
-  } catch (error) {
-    console.error("Error en la autenticación:", error);
-    throw new Error("Error en la autenticación");
-  }
-};
+// export const login = async (
+//   username: string,
+//   password: string
+// ): Promise<string> => {
+//   try {
+//     const response = await api.post("/auth/login", { username, password });
+//     console.log("Response from backend:", response.data); // Verifica la respuesta del backend
+//     return response.data.token; // Asegúrate de que `token` exista en la respuesta del backend
+//   } catch (error) {
+//     console.error("Error en la autenticación:", error);
+//     throw new Error("Error en la autenticación");
+//   }
+// };
 
 //Interceptor para proteger solicitudes
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// api.interceptors.request.use((config) => {
+//   const token = localStorage.getItem("token");
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return config;
+// });
 
-api.interceptors.response.use(
-  (response) => response, // Si la respuesta es exitosa, simplemente retórnala
-  async (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.error("Token inválido o expirado. Redirigiendo al login...");
-      localStorage.removeItem("token"); // Elimina el token del almacenamiento local
-      // Puedes redirigir al usuario al login si es necesario
-      window.location.href = "/login"; // Redirige al login
-    }
-    return Promise.reject(error); // Propaga el error si no es relacionado al token
-  }
-);
 // Intercepta las respuestas del backend
-api.interceptors.response.use(
-  (response) => response, // Si la respuesta es exitosa, simplemente retórnala
-  (error) => {
-    // Si el token expiró o es inválido
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.error("Token inválido o expirado.");
+// api.interceptors.response.use(
+//   (response) => response, // Si la respuesta es exitosa, simplemente retórnala
+//   (error) => {
+//     // Si el token expiró o es inválido
+//     if (error.response?.status === 401 || error.response?.status === 403) {
+//       console.error("Token inválido o expirado.");
 
-      // Opcional: Mostrar un mensaje al usuario
-      alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+//       // Opcional: Mostrar un mensaje al usuario
+//       alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
 
-      // Elimina el token y redirige al login
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
+//       // Elimina el token y redirige al login
+//       localStorage.removeItem("token");
+//       window.location.href = "/login";
+//     }
 
-    // Propaga otros errores
-    return Promise.reject(error);
-  }
-);
+//     // Propaga otros errores
+//     return Promise.reject(error);
+//   }
+// );
 
 // Valida si el token sigue siendo válido
-export const validateToken = async (): Promise<boolean> => {
-  try {
-    await api.get("/auth/validate-token"); // Endpoint que solo verifica el token
-    return true; // El token es válido
-  } catch {
-    return false; // El token no es válido
-  }
-};
+// export const validateToken = async (): Promise<boolean> => {
+//   try {
+//     await api.get("/auth/validate-token"); // Endpoint que solo verifica el token
+//     return true; // El token es válido
+//   } catch {
+//     return false; // El token no es válido
+//   }
+// };
