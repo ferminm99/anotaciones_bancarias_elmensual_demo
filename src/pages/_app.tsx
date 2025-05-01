@@ -38,29 +38,26 @@ function MyApp({ Component, pageProps }: AppProps) {
   // if (!isAuthenticated && router.pathname !== "/login") return null;
 
   return (
-    <>
+    <Sidebar>
       {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
         <div
           style={{
             background: "linear-gradient(to right, #fbbf24, #facc15)",
             color: "#1f2937",
-            padding: "12px 20px",
+            padding: "10px 20px",
             fontSize: "0.95rem",
             fontWeight: 500,
             textAlign: "center",
             borderBottom: "2px solid #f59e0b",
-            zIndex: 9999,
           }}
         >
-          🔒 Estás en modo DEMO. Se permite hasta{" "}
-          <strong>30 acciones por día</strong> (crear, editar o eliminar). Los
-          datos se restauran automáticamente cada cierto tiempo.
+          🔒 Estás usando el modo DEMO. Tenés un límite de{" "}
+          <strong>30 acciones por día</strong>. Los datos se restauran
+          automáticamente.
         </div>
       )}
-      <Sidebar>
-        <Component {...pageProps} />
-      </Sidebar>
-    </>
+      <Component {...pageProps} />
+    </Sidebar>
   );
 }
 
