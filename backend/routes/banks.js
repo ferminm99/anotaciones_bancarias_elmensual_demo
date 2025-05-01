@@ -17,36 +17,41 @@ router.get("/", (req, res) => {
 });
 
 // Ruta para agregar un banco
+// Ruta para agregar un banco
 router.post("/", (req, res) => {
   const { nombre, saldo_total } = req.body;
 
-  // Consulta para verificar si el banco ya existe
+  if (!nombre || saldo_total == null) {
+    return res
+      .status(400)
+      .json({ error: "Faltan datos: nombre o saldo_total" });
+  }
+
   const checkQuery = "SELECT * FROM bancos WHERE nombre = $1";
   connection.query(checkQuery, [nombre], (err, result) => {
     if (err) {
-      console.error("Error al verificar banco existente:", err);
-      return res.status(500).send("Error al verificar banco");
+      console.error("Error en SELECT:", err);
+      return res.status(500).json({ error: err.message });
     }
 
     if (result.rows.length > 0) {
-      // Si el banco ya existe, devolvemos un error
-      return res.status(400).send("Ya existe un banco con este nombre");
+      return res
+        .status(400)
+        .json({ error: "Ya existe un banco con ese nombre" });
     }
 
-    // Si el banco no existe, procedemos a insertarlo
-    const insertQuery =
-      "INSERT INTO bancos (nombre, saldo_total) VALUES ($1, $2) RETURNING banco_id";
+    const insertQuery = `
+      INSERT INTO bancos (nombre, saldo_total)
+      VALUES ($1, $2)
+      RETURNING banco_id, nombre, saldo_total
+    `;
     connection.query(insertQuery, [nombre, saldo_total], (err, result) => {
       if (err) {
-        console.error("Error al agregar banco:", err);
-        return res.status(500).send("Error al agregar banco");
+        console.error("Error en INSERT:", err);
+        return res.status(500).json({ error: err.message });
       }
 
-      res.json({
-        banco_id: result.rows[0].banco_id,
-        nombre,
-        saldo_total,
-      });
+      res.json(result.rows[0]);
     });
   });
 });
