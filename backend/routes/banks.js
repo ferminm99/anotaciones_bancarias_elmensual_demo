@@ -7,7 +7,7 @@ const connection = require("../db");
 router.get("/", async (req, res) => {
   try {
     console.log("📥 GET /bancos llamado");
-    const result = await db.query("SELECT * FROM bancos");
+    const result = await connection.query("SELECT * FROM bancos");
     console.log("📤 Resultados:", result.rows);
     res.json(result.rows);
   } catch (err) {
