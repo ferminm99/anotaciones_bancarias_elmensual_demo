@@ -6,31 +6,32 @@ const transactionsRoutes = require("./routes/transactions");
 const banksRoutes = require("./routes/banks");
 const clientsRoutes = require("./routes/clients");
 const chequesRoutes = require("./routes/cheques");
-const authRoutes = require("./routes/auth");
+// const authRoutes = require("./routes/auth");
 const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones
 
 // Configuración de CORS
 const corsOptions = {
   origin: [
-    "https://anotaciones-bancarias-elmensual.vercel.app",
+    "https://anotacionesbancariaselmensualdemo-production.up.railway.app",
+    "https://anotaciones-bancarias-elmensual-demo.vercel.app",
     "http://localhost:3000",
     "http://localhost:3001",
-  ], // Agrega localhost si estás probando en local
+  ],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // Rutas
 app.use("/transacciones", transactionsRoutes);
 app.use("/bancos", banksRoutes);
 app.use("/clientes", clientsRoutes);
 app.use("/cheques", chequesRoutes);
-app.use("/auth", authRoutes);
+// app.use("/auth", authRoutes);
 
 // Aquí puedes agregar un log para confirmar que las rutas se han registrado
 console.log("Rutas registradas: /transacciones, /bancos, /clientes");
