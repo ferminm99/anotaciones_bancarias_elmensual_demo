@@ -22,7 +22,7 @@ const Home: React.FC = () => {
     data: T;
   }
 
-  const [sessionExpired, setSessionExpired] = useState(false);
+  // const [sessionExpired, setSessionExpired] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<
@@ -56,68 +56,68 @@ const Home: React.FC = () => {
       .catch((error) => console.error("Error al obtener los bancos:", error));
   };
 
-  useEffect(() => {
-    // const verifySession = async () => {
-    //   const isValid = await validateToken();
-    //   if (!isValid && !sessionExpired) {
-    //     setSessionExpired(true); // Marca la sesión como expirada
-    //     //alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-    //     localStorage.removeItem("token");
-    //     window.location.href = "/login";
-    //   }
-    // };
+  // useEffect(() => {
+  // const verifySession = async () => {
+  //   const isValid = await validateToken();
+  //   if (!isValid && !sessionExpired) {
+  //     setSessionExpired(true); // Marca la sesión como expirada
+  //     //alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+  //     localStorage.removeItem("token");
+  //     window.location.href = "/login";
+  //   }
+  // };
 
-    // verifySession();
+  //   // verifySession();
 
-    // Carga los bancos y transacciones si el token es válido
-    if (!sessionExpired) {
-      getBanks()
-        .then((response) => {
-          const bancos: Bank[] = response.data;
-          setBanks(bancos);
+  //   // Carga los bancos y transacciones si el token es válido
+  //   if (!sessionExpired) {
+  //     getBanks()
+  //       .then((response) => {
+  //         const bancos: Bank[] = response.data;
+  //         setBanks(bancos);
 
-          const saldoTotal = bancos.reduce(
-            (acc: number, bank: Bank) => acc + bank.saldo_total,
-            0
-          );
-          setTotalSaldo(saldoTotal);
+  //         const saldoTotal = bancos.reduce(
+  //           (acc: number, bank: Bank) => acc + bank.saldo_total,
+  //           0
+  //         );
+  //         setTotalSaldo(saldoTotal);
 
-          const savedBank = localStorage.getItem("selectedBank");
-          const firstBank: Bank = savedBank ? JSON.parse(savedBank) : bancos[0];
+  //         const savedBank = localStorage.getItem("selectedBank");
+  //         const firstBank: Bank = savedBank ? JSON.parse(savedBank) : bancos[0];
 
-          if (firstBank) {
-            setSelectedBank(firstBank);
+  //         if (firstBank) {
+  //           setSelectedBank(firstBank);
 
-            getTransactions()
-              .then((response) => {
-                const orderedTransactions = response.data.sort(
-                  (a: Transaction, b: Transaction) => {
-                    const dateComparison =
-                      new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
-                    if (dateComparison === 0) {
-                      return b.transaccion_id - a.transaccion_id;
-                    }
-                    return dateComparison;
-                  }
-                );
+  //           getTransactions()
+  //             .then((response) => {
+  //               const orderedTransactions = response.data.sort(
+  //                 (a: Transaction, b: Transaction) => {
+  //                   const dateComparison =
+  //                     new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+  //                   if (dateComparison === 0) {
+  //                     return b.transaccion_id - a.transaccion_id;
+  //                   }
+  //                   return dateComparison;
+  //                 }
+  //               );
 
-                setTransactions(orderedTransactions);
+  //               setTransactions(orderedTransactions);
 
-                const filtered = orderedTransactions.filter(
-                  (transaction: Transaction) =>
-                    transaction.banco_id === firstBank.banco_id
-                );
+  //               const filtered = orderedTransactions.filter(
+  //                 (transaction: Transaction) =>
+  //                   transaction.banco_id === firstBank.banco_id
+  //               );
 
-                setFilteredTransactions(filtered);
-              })
-              .catch((error) =>
-                console.error("Error al obtener las transacciones:", error)
-              );
-          }
-        })
-        .catch((error) => console.error("Error al obtener los bancos:", error));
-    }
-  }, [sessionExpired]);
+  //               setFilteredTransactions(filtered);
+  //             })
+  //             .catch((error) =>
+  //               console.error("Error al obtener las transacciones:", error)
+  //             );
+  //         }
+  //       })
+  //       .catch((error) => console.error("Error al obtener los bancos:", error));
+  //   }
+  // }, [sessionExpired]);
 
   useEffect(() => {
     getClientes()
