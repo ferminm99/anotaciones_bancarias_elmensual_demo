@@ -7,7 +7,7 @@ const banksRoutes = require("./routes/banks");
 const clientsRoutes = require("./routes/clients");
 const chequesRoutes = require("./routes/cheques");
 // const authRoutes = require("./routes/auth");
-const limitarAccionesDemo = require("./middlewares/limitarAccionesDemo");
+const limitarAccionesDemo = require("./middleware/limitarAccionesDemo");
 const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones
 
