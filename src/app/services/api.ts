@@ -124,11 +124,11 @@ export const getCheques = () => {
 // );
 
 // Valida si el token sigue siendo válido
-// export const validateToken = async (): Promise<boolean> => {
-//   try {
-//     await api.get("/auth/validate-token"); // Endpoint que solo verifica el token
-//     return true; // El token es válido
-//   } catch {
-//     return false; // El token no es válido
-//   }
-// };
+export const validateToken = async (): Promise<boolean> => {
+  try {
+    await api.get("/auth/validate-token"); // Endpoint que solo verifica el token
+    return true; // El token es válido
+  } catch {
+    return false; // El token no es válido
+  }
+};

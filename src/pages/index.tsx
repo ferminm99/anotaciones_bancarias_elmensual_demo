@@ -6,7 +6,6 @@ import {
   deleteTransaction,
   addTransaction,
   getBanks,
-  validateToken,
   updateTransaction,
   getClientes,
 } from "../app/services/api";
@@ -58,17 +57,17 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    const verifySession = async () => {
-      const isValid = await validateToken();
-      if (!isValid && !sessionExpired) {
-        setSessionExpired(true); // Marca la sesión como expirada
-        //alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-      }
-    };
+    // const verifySession = async () => {
+    //   const isValid = await validateToken();
+    //   if (!isValid && !sessionExpired) {
+    //     setSessionExpired(true); // Marca la sesión como expirada
+    //     //alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+    //     localStorage.removeItem("token");
+    //     window.location.href = "/login";
+    //   }
+    // };
 
-    verifySession();
+    // verifySession();
 
     // Carga los bancos y transacciones si el token es válido
     if (!sessionExpired) {
