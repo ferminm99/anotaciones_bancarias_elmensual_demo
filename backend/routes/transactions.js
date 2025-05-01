@@ -1,38 +1,43 @@
+// backend/routes/transacciones.js
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
 const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
-// Ruta para obtener todas las transacciones
+
+// GET: obtener transacciones visibles para la sesión
 router.get("/", (req, res) => {
+  const sessionId = res.locals.session_id;
+
   const query = `
     SELECT 
-      transacciones.transaccion_id AS transaccion_id, 
+      transacciones.transaccion_id, 
       transacciones.fecha, 
       transacciones.tipo, 
       transacciones.monto, 
-      transacciones.banco_id,      
-      transacciones.cliente_id,   
-      transacciones.cheque_id,     
-      bancos.nombre AS nombre_banco, 
+      transacciones.banco_id, 
+      transacciones.cliente_id, 
+      transacciones.cheque_id,
+      transacciones.session_id,
+      bancos.nombre AS nombre_banco,
       CONCAT(clientes.nombre, ' ', COALESCE(clientes.apellido, '')) AS nombre_cliente,
       cheques.numero AS numero_cheque
     FROM transacciones
     JOIN bancos ON transacciones.banco_id = bancos.banco_id
     LEFT JOIN clientes ON transacciones.cliente_id = clientes.cliente_id
     LEFT JOIN cheques ON transacciones.cheque_id = cheques.cheque_id
+    WHERE transacciones.session_id IS NULL OR transacciones.session_id = $1
   `;
 
-  connection.query(query, (err, results) => {
+  connection.query(query, [sessionId], (err, result) => {
     if (err) {
-      console.error("Error ejecutando la consulta:", err);
-      res.status(500).send("Error al obtener las transacciones");
-      return;
+      console.error("Error al obtener transacciones:", err);
+      return res.status(500).send("Error al obtener transacciones");
     }
-    res.json(results.rows); // PostgreSQL devuelve los resultados en "rows"
+    res.json(result.rows);
   });
 });
 
-// Ruta para agregar una nueva transacción
+// POST: agregar transacción
 router.post("/", limitarAccionesDemo, (req, res) => {
   const {
     fecha,
@@ -41,37 +46,58 @@ router.post("/", limitarAccionesDemo, (req, res) => {
     tipo,
     monto,
     banco_id,
-    cheque_id, // Este es el número del cheque que recibimos
+    cheque_id,
   } = req.body;
 
+  const sessionId = res.locals.session_id;
   const formattedFecha = fecha
     ? new Date(fecha).toISOString()
     : new Date().toISOString();
 
-  console.log("Datos recibidos en el POST:", {
-    fecha,
-    formattedFecha, // Mostramos la fecha que realmente se utilizará
-    nombre_cliente,
-    cliente_id,
-    tipo,
-    monto,
-    banco_id,
-    cheque_id,
-  });
+  function insertarTransaccion(
+    cliente_id_final,
+    nombre_cliente_final,
+    cheque_id_final
+  ) {
+    const query = `
+      INSERT INTO transacciones (fecha, cliente_id, tipo, monto, banco_id, cheque_id, session_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING transaccion_id
+    `;
+    connection.query(
+      query,
+      [
+        formattedFecha,
+        cliente_id_final,
+        tipo,
+        monto,
+        banco_id,
+        cheque_id_final,
+        sessionId,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("Error al insertar transacción:", err);
+          return res.status(500).send("Error al insertar transacción");
+        }
 
-  let numero_cheque = cheque_id;
-  // Función para manejar la inserción de la transacción
-  function insertarTransaccion(cliente_id, nombre_cliente) {
-    console.log("Insertando transacción con cliente_id:", cliente_id);
+        res.json({
+          message: "Transacción agregada con éxito",
+          transaccion_id: result.rows[0].transaccion_id,
+          cliente_id: cliente_id_final,
+          nombre_cliente: nombre_cliente_final,
+          banco_id,
+          fecha: formattedFecha,
+          tipo,
+          monto,
+          cheque_id: cheque_id_final,
+        });
+      }
+    );
+  }
 
-    // Si la transacción es un pago con cheque
+  function manejarChequeYTransaccion(cliente_id_final, nombre_cliente_final) {
     if (tipo === "pago_cheque" && cheque_id) {
-      console.log(
-        "Transacción es un pago con cheque, número cheque:",
-        cheque_id
-      );
-
-      // Buscar si el cheque ya existe por su número
       const queryCheque = "SELECT cheque_id FROM cheques WHERE numero = $1";
       connection.query(queryCheque, [cheque_id], (err, result) => {
         if (err) {
@@ -80,154 +106,94 @@ router.post("/", limitarAccionesDemo, (req, res) => {
         }
 
         if (result.rows.length > 0) {
-          // El cheque ya existe, usamos su cheque_id
-          id = result.rows[0].cheque_id;
-          console.log("Cheque ya existe con cheque_id:", id);
-          realizarInsercionTransaccion(id);
-        } else {
-          // El cheque no existe, lo creamos
-          console.log(
-            "Cheque no existe, creando nuevo cheque con número:",
-            numero_cheque
+          insertarTransaccion(
+            cliente_id_final,
+            nombre_cliente_final,
+            result.rows[0].cheque_id
           );
-          const insertCheque =
-            "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id";
-          connection.query(insertCheque, [numero_cheque], (err, result) => {
-            if (err) {
-              console.error("Error al insertar cheque:", err);
-              return res.status(500).send("Error al insertar cheque");
+        } else {
+          const insertCheque = `
+            INSERT INTO cheques (numero, session_id)
+            VALUES ($1, $2)
+            RETURNING cheque_id
+          `;
+          connection.query(
+            insertCheque,
+            [cheque_id, sessionId],
+            (err, result) => {
+              if (err) {
+                console.error("Error al insertar cheque:", err);
+                return res.status(500).send("Error al insertar cheque");
+              }
+              insertarTransaccion(
+                cliente_id_final,
+                nombre_cliente_final,
+                result.rows[0].cheque_id
+              );
             }
-            id = result.rows[0].cheque_id;
-            console.log("Cheque creado con cheque_id:", id);
-            realizarInsercionTransaccion(id);
-          });
+          );
         }
       });
     } else {
-      console.log("Transacción no es un pago con cheque.");
-      realizarInsercionTransaccion(null);
+      insertarTransaccion(cliente_id_final, nombre_cliente_final, null);
     }
+  }
 
-    // Función para realizar la inserción de la transacción
-    function realizarInsercionTransaccion(cheque_id) {
-      console.log(
-        "Realizando inserción de transacción con cheque_id:",
-        cheque_id
-      );
-
-      const query =
-        "INSERT INTO transacciones (fecha, cliente_id, tipo, monto, banco_id, cheque_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING transaccion_id";
-
+  function manejarCliente() {
+    if (cliente_id) {
       connection.query(
-        query,
-        [formattedFecha, cliente_id || null, tipo, monto, banco_id, cheque_id],
+        "SELECT nombre, apellido FROM clientes WHERE cliente_id = $1",
+        [cliente_id],
         (err, result) => {
-          if (err) {
-            console.error("Error al insertar transacción:", err);
-            return res.status(500).send("Error al insertar transacción");
+          if (err || result.rows.length === 0) {
+            return res.status(500).send("Error al obtener nombre del cliente");
           }
-
-          console.log(
-            "Transacción agregada con éxito, transaccion_id:",
-            result.rows[0].transaccion_id
-          );
-
-          res.json({
-            message: "Transacción agregada con éxito",
-            transaccion_id: result.rows[0].transaccion_id,
-            cliente_id: cliente_id,
-            nombre_cliente: nombre_cliente,
-            banco_id: banco_id,
-            fecha: formattedFecha,
-            tipo: tipo,
-            monto: monto,
-            cheque_id: cheque_id, // Incluimos cheque_id en la respuesta
-          });
+          const nombreCompleto = `${result.rows[0].nombre} ${
+            result.rows[0].apellido || ""
+          }`.trim();
+          manejarChequeYTransaccion(cliente_id, nombreCompleto);
         }
       );
+    } else if (!nombre_cliente || nombre_cliente.trim() === "") {
+      manejarChequeYTransaccion(null, null);
+    } else {
+      const [nombre, ...resto] = nombre_cliente.split(" ");
+      const apellido = resto.join(" ") || null;
+
+      const queryBuscar = `
+        SELECT cliente_id FROM clientes 
+        WHERE nombre = $1 AND (apellido = $2 OR apellido IS NULL)
+      `;
+      connection.query(queryBuscar, [nombre, apellido], (err, result) => {
+        if (err) return res.status(500).send("Error al buscar cliente");
+
+        if (result.rows.length > 0) {
+          manejarChequeYTransaccion(result.rows[0].cliente_id, nombre_cliente);
+        } else {
+          const queryInsert = `
+            INSERT INTO clientes (nombre, apellido, session_id)
+            VALUES ($1, $2, $3) RETURNING cliente_id
+          `;
+          connection.query(
+            queryInsert,
+            [nombre, apellido, sessionId],
+            (err, result) => {
+              if (err) return res.status(500).send("Error al insertar cliente");
+              manejarChequeYTransaccion(
+                result.rows[0].cliente_id,
+                nombre_cliente
+              );
+            }
+          );
+        }
+      });
     }
   }
 
-  // Lógica para verificar el cliente
-  if (cliente_id) {
-    console.log("Cliente ya existe con cliente_id:", cliente_id);
-
-    // Consulta para obtener el nombre y apellido del cliente
-    const queryNombreCliente =
-      "SELECT nombre, apellido FROM clientes WHERE cliente_id = $1";
-    connection.query(queryNombreCliente, [cliente_id], (err, result) => {
-      if (err) {
-        console.error("Error al obtener el nombre del cliente:", err);
-        return res.status(500).send("Error al obtener el nombre del cliente");
-      }
-
-      if (result.rows.length > 0) {
-        // Concatenamos nombre y apellido para pasarlo a insertarTransaccion
-        const nombreCompleto = `${result.rows[0].nombre} ${
-          result.rows[0].apellido || ""
-        }`.trim();
-        insertarTransaccion(cliente_id, nombreCompleto);
-      } else {
-        console.error("Cliente no encontrado.");
-        res.status(404).send("Cliente no encontrado");
-      }
-    });
-  } else if (!nombre_cliente || nombre_cliente.trim() === "") {
-    console.log("No se proporcionó un cliente válido.");
-    insertarTransaccion(null, null);
-  } else {
-    console.log(
-      "Cliente no proporcionado, buscando o creando uno nuevo:",
-      nombre_cliente
-    );
-
-    const clienteDividido = nombre_cliente.split(" ");
-    let nombre = clienteDividido.slice(0, -1).join(" ");
-    let apellido = clienteDividido.slice(-1).join(" ");
-
-    if (clienteDividido.length === 1) {
-      nombre = clienteDividido[0];
-      apellido = null;
-    }
-
-    const queryCliente =
-      "SELECT cliente_id FROM clientes WHERE nombre = $1 AND (apellido = $2 OR apellido IS NULL)";
-    connection.query(queryCliente, [nombre, apellido], (err, result) => {
-      if (err) {
-        console.error("Error en la consulta de cliente:", err);
-        return res.status(500).send("Error en la consulta de cliente");
-      }
-
-      let cliente_id;
-
-      if (result.rows.length > 0) {
-        // Cliente ya existe
-        cliente_id = result.rows[0].cliente_id;
-        console.log("Cliente encontrado con cliente_id:", cliente_id);
-        insertarTransaccion(cliente_id, nombre + " " + apellido);
-      } else {
-        // Cliente no existe, lo creamos
-        console.log(
-          "Cliente no existe, creando nuevo cliente:",
-          nombre,
-          apellido
-        );
-        const insertCliente =
-          "INSERT INTO clientes (nombre, apellido) VALUES ($1, $2) RETURNING cliente_id";
-        connection.query(insertCliente, [nombre, apellido], (err, result) => {
-          if (err) {
-            console.error("Error al insertar cliente:", err);
-            return res.status(500).send("Error al insertar cliente");
-          }
-          cliente_id = result.rows[0].cliente_id;
-          console.log("Cliente creado con cliente_id:", cliente_id);
-          insertarTransaccion(cliente_id, nombre + " " + apellido);
-        });
-      }
-    });
-  }
+  manejarCliente();
 });
 
+// PUT: actualizar transacción si es del usuario
 router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
   const { transaccion_id } = req.params;
   const {
@@ -241,72 +207,65 @@ router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
     numero_cheque,
   } = req.body;
 
-  const getOriginalFechaQuery =
-    "SELECT fecha FROM transacciones WHERE transaccion_id = $1";
+  const sessionId = res.locals.session_id;
 
-  connection.query(getOriginalFechaQuery, [transaccion_id], (err, result) => {
-    if (err) {
-      console.error("Error al obtener la fecha original:", err);
-      return res.status(500).send("Error al obtener la fecha original");
+  // Validar que el usuario tenga permiso
+  const checkQuery =
+    "SELECT session_id FROM transacciones WHERE transaccion_id = $1";
+  connection.query(checkQuery, [transaccion_id], (err, result) => {
+    if (err) return res.status(500).send("Error al verificar propiedad");
+    if (result.rows.length === 0)
+      return res.status(404).send("Transacción no encontrada");
+
+    const row = result.rows[0];
+
+    if (row.session_id === null) {
+      return res.status(403).send("No se puede editar una transacción base");
     }
 
-    const originalFecha = result.rows[0].fecha;
+    if (row.session_id !== sessionId) {
+      return res.status(403).send("No autorizado");
+    }
+
+    continuarActualizacion();
+  });
+
+  function continuarActualizacion() {
     const formattedFecha = fecha
       ? new Date(fecha).toISOString()
-      : originalFecha;
+      : new Date().toISOString();
 
-    // Lógica para manejar cliente
     function manejarCliente(callback) {
       if (cliente_id) {
-        // Si se proporciona `cliente_id`, solo lo usamos directamente
-        console.log("Cliente ya existe con cliente_id:", cliente_id);
         callback(cliente_id);
       } else if (!nombre_cliente || nombre_cliente.trim() === "") {
-        // Si no hay cliente ni nombre de cliente, dejamos `cliente_id` como null
-        console.log("No se proporcionó cliente válido, se usará null.");
         callback(null);
       } else {
-        // Si se proporciona un nombre de cliente, verificamos si existe o lo creamos
-        console.log("Buscando o creando cliente:", nombre_cliente);
-
         const clienteDividido = nombre_cliente.split(" ");
-        let nombre = clienteDividido.slice(0, -1).join(" ");
-        let apellido = clienteDividido.slice(-1).join(" ");
+        const nombre = clienteDividido.slice(0, -1).join(" ");
+        const apellido = clienteDividido.slice(-1).join(" ") || null;
 
-        if (clienteDividido.length === 1) {
-          nombre = clienteDividido[0];
-          apellido = null;
-        }
-
-        const queryCliente =
-          "SELECT cliente_id FROM clientes WHERE nombre = $1 AND (apellido = $2 OR apellido IS NULL)";
-        connection.query(queryCliente, [nombre, apellido], (err, result) => {
-          if (err) {
-            console.error("Error al buscar cliente:", err);
-            return res.status(500).send("Error al buscar cliente");
-          }
+        const buscarCliente = `
+          SELECT cliente_id FROM clientes
+          WHERE nombre = $1 AND (apellido = $2 OR apellido IS NULL)
+        `;
+        connection.query(buscarCliente, [nombre, apellido], (err, result) => {
+          if (err) return res.status(500).send("Error al buscar cliente");
 
           if (result.rows.length > 0) {
-            // Cliente ya existe
-            const cliente_id = result.rows[0].cliente_id;
-            console.log("Cliente encontrado con cliente_id:", cliente_id);
-            callback(cliente_id);
+            callback(result.rows[0].cliente_id);
           } else {
-            // Cliente no existe, lo creamos
-            console.log("Cliente no encontrado, creando nuevo cliente.");
-            const insertCliente =
-              "INSERT INTO clientes (nombre, apellido) VALUES ($1, $2) RETURNING cliente_id";
+            const insertarCliente = `
+              INSERT INTO clientes (nombre, apellido, session_id)
+              VALUES ($1, $2, $3) RETURNING cliente_id
+            `;
             connection.query(
-              insertCliente,
-              [nombre, apellido],
+              insertarCliente,
+              [nombre, apellido, sessionId],
               (err, result) => {
-                if (err) {
-                  console.error("Error al crear cliente:", err);
-                  return res.status(500).send("Error al crear cliente");
-                }
-                const nuevoClienteId = result.rows[0].cliente_id;
-                console.log("Cliente creado con cliente_id:", nuevoClienteId);
-                callback(nuevoClienteId);
+                if (err)
+                  return res.status(500).send("Error al insertar cliente");
+                callback(result.rows[0].cliente_id);
               }
             );
           }
@@ -314,144 +273,136 @@ router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
       }
     }
 
-    // Llamamos a manejarCliente para resolver el cliente antes de actualizar la transacción
-    manejarCliente((resolvedClienteId) => {
-      // Verificamos si la transacción es un pago con cheque y si el cheque_id existe
-      if (tipo === "pago_cheque" && cheque_id) {
-        const queryCheque =
+    function manejarChequeYActualizar(cliente_id_final) {
+      if (tipo === "pago_cheque" && numero_cheque) {
+        const buscarCheque =
           "SELECT cheque_id, numero FROM cheques WHERE cheque_id = $1";
-        connection.query(queryCheque, [cheque_id], (err, result) => {
-          if (err) {
-            console.error("Error al buscar cheque:", err);
-            return res.status(500).send("Error al buscar cheque");
-          }
+        connection.query(buscarCheque, [cheque_id], (err, result) => {
+          if (err)
+            return res.status(500).send("Error al buscar cheque existente");
 
           if (result.rows.length > 0) {
             const cheque = result.rows[0];
             if (cheque.numero !== String(numero_cheque)) {
-              const updateChequeQuery =
+              const actualizarCheque =
                 "UPDATE cheques SET numero = $1 WHERE cheque_id = $2";
               connection.query(
-                updateChequeQuery,
-                [String(numero_cheque), cheque_id],
-                (err, result) => {
-                  if (err) {
-                    console.error(
-                      "Error al actualizar el número del cheque:",
-                      err
-                    );
-                    return res
-                      .status(500)
-                      .send("Error al actualizar el número del cheque");
-                  }
-                  console.log(
-                    "Cheque actualizado con el nuevo número:",
-                    numero_cheque
-                  );
-                  actualizarTransaccion(cheque_id, resolvedClienteId); // Actualizamos la transacción con el cheque actualizado
+                actualizarCheque,
+                [numero_cheque, cheque_id],
+                (err) => {
+                  if (err)
+                    return res.status(500).send("Error al actualizar cheque");
+                  actualizarTransaccion(cheque_id, cliente_id_final);
                 }
               );
             } else {
-              actualizarTransaccion(cheque_id, resolvedClienteId); // Si el número no cambió, actualizamos la transacción directamente
+              actualizarTransaccion(cheque_id, cliente_id_final);
             }
           } else {
-            const insertChequeQuery =
-              "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id";
+            const insertarCheque = `
+              INSERT INTO cheques (numero, session_id) VALUES ($1, $2)
+              RETURNING cheque_id
+            `;
             connection.query(
-              insertChequeQuery,
-              [String(numero_cheque)],
+              insertarCheque,
+              [numero_cheque, sessionId],
               (err, result) => {
-                if (err) {
-                  console.error("Error al insertar cheque:", err);
-                  return res.status(500).send("Error al insertar cheque");
-                }
-                const newChequeId = result.rows[0].cheque_id;
-                console.log("Nuevo cheque creado con ID:", newChequeId);
-                actualizarTransaccion(newChequeId, resolvedClienteId); // Actualizamos la transacción con el nuevo cheque creado
+                if (err)
+                  return res.status(500).send("Error al insertar nuevo cheque");
+                actualizarTransaccion(
+                  result.rows[0].cheque_id,
+                  cliente_id_final
+                );
               }
             );
           }
         });
       } else {
-        actualizarTransaccion(null, resolvedClienteId); // Si no es pago con cheque, continuamos sin cheque_id
+        actualizarTransaccion(null, cliente_id_final);
       }
-    });
+    }
 
-    // Función para actualizar la transacción
-    function actualizarTransaccion(cheque_id, resolvedClienteId) {
-      const query =
-        "UPDATE transacciones SET fecha = $1, cliente_id = $2, tipo = $3, monto = $4, banco_id = $5, cheque_id = $6 WHERE transaccion_id = $7";
+    function actualizarTransaccion(chequeIdFinal, clienteIdFinal) {
+      const updateQuery = `
+        UPDATE transacciones
+        SET fecha = $1, cliente_id = $2, tipo = $3, monto = $4, banco_id = $5, cheque_id = $6
+        WHERE transaccion_id = $7
+      `;
+      const values = [
+        formattedFecha,
+        clienteIdFinal,
+        tipo,
+        monto,
+        banco_id,
+        chequeIdFinal,
+        transaccion_id,
+      ];
 
-      connection.query(
-        query,
-        [
-          formattedFecha,
-          resolvedClienteId || null,
+      connection.query(updateQuery, values, (err) => {
+        if (err) return res.status(500).send("Error al actualizar transacción");
+
+        res.json({
+          message: "Transacción actualizada con éxito",
+          transaccion_id: Number(transaccion_id),
+          cliente_id: clienteIdFinal,
+          nombre_cliente: nombre_cliente,
+          banco_id,
+          fecha: formattedFecha,
           tipo,
           monto,
-          banco_id,
-          cheque_id,
-          transaccion_id,
-        ],
-        (err, result) => {
-          if (err) {
-            console.error("Error al actualizar la transacción:", err);
-            return res.status(500).send("Error al actualizar la transacción");
-          }
-          res.json({
-            message: "Transacción actualizada con éxito",
-            transaccion_id: transaccion_id,
-            cliente_id: resolvedClienteId,
-            nombre_cliente: nombre_cliente,
-            banco_id: banco_id,
-            fecha: formattedFecha,
-            tipo: tipo,
-            monto: monto,
-            cheque_id: cheque_id,
-          });
-        }
-      );
+          cheque_id: chequeIdFinal,
+        });
+      });
     }
-  });
+
+    manejarCliente((clienteFinal) => {
+      manejarChequeYActualizar(clienteFinal);
+    });
+  }
 });
 
-// Ruta para eliminar una transacción
+// DELETE: eliminar transacción si es del usuario
 router.delete("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
+  const sessionId = res.locals.session_id;
 
-  const query =
-    "DELETE FROM transacciones WHERE transaccion_id = $1 RETURNING cheque_id";
-
-  connection.query(query, [id], (err, result) => {
-    if (err) {
-      console.error("Error al eliminar la transacción:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al eliminar la transacción" });
+  const getQuery =
+    "SELECT cheque_id, session_id FROM transacciones WHERE transaccion_id = $1";
+  connection.query(getQuery, [id], (err, result) => {
+    if (err || result.rows.length === 0) {
+      return res.status(404).send("Transacción no encontrada");
     }
 
-    if (result.rowCount > 0) {
-      const cheque_id = result.rows[0].cheque_id;
+    const { cheque_id, session_id } = result.rows[0];
 
-      if (cheque_id) {
-        // Si la transacción tenía un cheque, lo eliminamos también
-        const deleteCheque = "DELETE FROM cheques WHERE cheque_id = $1";
-        connection.query(deleteCheque, [cheque_id], (err) => {
-          if (err) {
-            console.error("Error al eliminar el cheque:", err);
-            return res
-              .status(500)
-              .json({ message: "Error al eliminar el cheque" });
-          }
+    if (session_id === null) {
+      return res.status(403).send("No se puede eliminar una transacción base");
+    }
 
-          res.json({ message: "Transacción y cheque eliminados con éxito" });
-        });
-      } else {
-        res.json({ message: "Transacción eliminada con éxito" });
+    if (session_id !== sessionId) {
+      return res.status(403).send("No autorizado");
+    }
+
+    connection.query(
+      "DELETE FROM transacciones WHERE transaccion_id = $1",
+      [id],
+      (err) => {
+        if (err) return res.status(500).send("Error al eliminar transacción");
+
+        if (cheque_id) {
+          connection.query(
+            "DELETE FROM cheques WHERE cheque_id = $1",
+            [cheque_id],
+            (err) => {
+              if (err) return res.status(500).send("Error al eliminar cheque");
+              res.json({ message: "Transacción y cheque eliminados" });
+            }
+          );
+        } else {
+          res.json({ message: "Transacción eliminada" });
+        }
       }
-    } else {
-      res.status(404).json({ message: "Transacción no encontrada" });
-    }
+    );
   });
 });
 

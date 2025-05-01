@@ -1,20 +1,16 @@
-// backend/routes/banks.js
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
 const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 
-// Ruta para obtener todos los bancos
+// Ruta para obtener todos los bancos visibles al usuario actual
 router.get("/", (req, res) => {
-  const query = "SELECT * FROM bancos";
-  connection.query(query, (err, results) => {
+  const sessionId = res.locals.session_id;
+  const query = `SELECT * FROM bancos WHERE session_id IS NULL OR session_id = $1`;
+  connection.query(query, [sessionId], (err, results) => {
     if (err) {
       console.error("Error al obtener bancos:", err);
       return res.status(500).send("Error al obtener bancos");
-    }
-
-    if (!results || !results.rows) {
-      return res.status(500).send("Formato inesperado de respuesta");
     }
 
     res.json(results.rows);
@@ -22,9 +18,9 @@ router.get("/", (req, res) => {
 });
 
 // Ruta para agregar un banco
-// Ruta para agregar un banco
 router.post("/", limitarAccionesDemo, (req, res) => {
   const { nombre, saldo_total } = req.body;
+  const sessionId = res.locals.session_id;
 
   if (!nombre || saldo_total == null) {
     return res
@@ -32,8 +28,9 @@ router.post("/", limitarAccionesDemo, (req, res) => {
       .json({ error: "Faltan datos: nombre o saldo_total" });
   }
 
-  const checkQuery = "SELECT * FROM bancos WHERE nombre = $1";
-  connection.query(checkQuery, [nombre], (err, result) => {
+  const checkQuery =
+    "SELECT * FROM bancos WHERE nombre = $1 AND (session_id IS NULL OR session_id = $2)";
+  connection.query(checkQuery, [nombre, sessionId], (err, result) => {
     if (err) {
       console.error("Error en SELECT:", err);
       return res.status(500).json({ error: err.message });
@@ -46,18 +43,22 @@ router.post("/", limitarAccionesDemo, (req, res) => {
     }
 
     const insertQuery = `
-      INSERT INTO bancos (nombre, saldo_total)
-      VALUES ($1, $2)
+      INSERT INTO bancos (nombre, saldo_total, session_id)
+      VALUES ($1, $2, $3)
       RETURNING banco_id, nombre, saldo_total
     `;
-    connection.query(insertQuery, [nombre, saldo_total], (err, result) => {
-      if (err) {
-        console.error("Error en INSERT:", err);
-        return res.status(500).json({ error: err.message });
-      }
+    connection.query(
+      insertQuery,
+      [nombre, saldo_total, sessionId],
+      (err, result) => {
+        if (err) {
+          console.error("Error en INSERT:", err);
+          return res.status(500).json({ error: err.message });
+        }
 
-      res.json(result.rows[0]);
-    });
+        res.json(result.rows[0]);
+      }
+    );
   });
 });
 
@@ -65,22 +66,29 @@ router.post("/", limitarAccionesDemo, (req, res) => {
 router.put("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
   const { nombre, saldo_total } = req.body;
+  const sessionId = res.locals.session_id;
 
-  // Consulta para verificar si otro banco tiene el mismo nombre
-  const checkQuery =
-    "SELECT * FROM bancos WHERE nombre = $1 AND banco_id != $2";
-  connection.query(checkQuery, [nombre, id], (err, result) => {
+  // Primero verificar si el banco pertenece al usuario
+  const checkOwnerQuery = `SELECT session_id FROM bancos WHERE banco_id = $1`;
+  connection.query(checkOwnerQuery, [id], (err, result) => {
     if (err) {
-      console.error("Error al verificar banco existente:", err);
-      return res.status(500).send("Error al verificar banco");
+      console.error("Error al verificar propietario del banco:", err);
+      return res.status(500).send("Error interno del servidor");
     }
 
-    if (result.rows.length > 0) {
-      // Si otro banco ya existe con el nuevo nombre, devolvemos un error
-      return res.status(400).send("Ya existe otro banco con este nombre");
+    const banco = result.rows[0];
+    if (!banco) return res.status(404).send("Banco no encontrado");
+
+    if (banco.session_id === null) {
+      return res
+        .status(403)
+        .send("No se puede editar bancos base del sistema.");
     }
 
-    // Si no existe otro banco con el mismo nombre, procedemos a actualizarlo
+    if (banco.session_id !== sessionId) {
+      return res.status(403).send("No autorizado para modificar este banco.");
+    }
+
     const updateQuery =
       "UPDATE bancos SET nombre = $1, saldo_total = $2 WHERE banco_id = $3";
     connection.query(updateQuery, [nombre, saldo_total, id], (err, result) => {
@@ -89,11 +97,7 @@ router.put("/:id", limitarAccionesDemo, (req, res) => {
         return res.status(500).send("Error al actualizar banco");
       }
 
-      if (result.rowCount === 0) {
-        return res.status(404).send("Banco no encontrado");
-      }
-
-      res.sendStatus(200); // Banco actualizado con éxito
+      res.sendStatus(200);
     });
   });
 });
@@ -101,14 +105,36 @@ router.put("/:id", limitarAccionesDemo, (req, res) => {
 // Ruta para eliminar un banco
 router.delete("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM bancos WHERE banco_id = $1";
-  connection.query(query, [id], (err, result) => {
+  const sessionId = res.locals.session_id;
+
+  const checkQuery = "SELECT session_id FROM bancos WHERE banco_id = $1";
+  connection.query(checkQuery, [id], (err, result) => {
     if (err) {
-      console.error("Error al eliminar banco:", err);
-      res.status(500).send("Error al eliminar banco");
-      return;
+      console.error("Error al verificar session_id del banco:", err);
+      return res.status(500).send("Error interno del servidor");
     }
-    res.sendStatus(200);
+
+    const banco = result.rows[0];
+    if (!banco) return res.status(404).send("Banco no encontrado");
+
+    if (banco.session_id === null) {
+      return res
+        .status(403)
+        .send("No se puede eliminar bancos base del sistema.");
+    }
+
+    if (banco.session_id !== sessionId) {
+      return res.status(403).send("No autorizado para eliminar este banco.");
+    }
+
+    const deleteQuery = "DELETE FROM bancos WHERE banco_id = $1";
+    connection.query(deleteQuery, [id], (err, result) => {
+      if (err) {
+        console.error("Error al eliminar banco:", err);
+        return res.status(500).send("Error al eliminar banco");
+      }
+      res.sendStatus(200);
+    });
   });
 });
 

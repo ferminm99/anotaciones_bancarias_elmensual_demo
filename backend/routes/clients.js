@@ -5,68 +5,80 @@ const connection = require("../db");
 const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 // Ruta para obtener todos los clientes
 router.get("/", (req, res) => {
-  const query = "SELECT * FROM clientes";
-  connection.query(query, (err, results) => {
-    if (err) {
-      console.error("Error al obtener clientes:", err);
-      res.status(500).send("Error al obtener clientes");
-      return;
-    }
-    res.json(results.rows); // PostgreSQL usa 'rows'
+  const sessionId = res.locals.session_id;
+  const query =
+    "SELECT * FROM clientes WHERE session_id IS NULL OR session_id = $1";
+  connection.query(query, [sessionId], (err, results) => {
+    if (err) return res.status(500).send("Error al obtener clientes");
+    res.json(results.rows);
   });
 });
 
-// Ruta para agregar un cliente
 router.post("/", limitarAccionesDemo, (req, res) => {
   const { nombre, apellido } = req.body;
+  const sessionId = res.locals.session_id;
+
   const query =
-    "INSERT INTO clientes (nombre, apellido) VALUES ($1, $2) RETURNING cliente_id";
-  connection.query(query, [nombre, apellido], (err, result) => {
-    if (err) {
-      console.error("Error al agregar cliente:", err);
-      res.status(500).send("Error al agregar cliente");
-      return;
-    }
-    res.json({
-      cliente_id: result.rows[0].cliente_id, // PostgreSQL devuelve el resultado en 'rows'
-      nombre,
-      apellido,
-    });
+    "INSERT INTO clientes (nombre, apellido, session_id) VALUES ($1, $2, $3) RETURNING cliente_id";
+  connection.query(query, [nombre, apellido, sessionId], (err, result) => {
+    if (err) return res.status(500).send("Error al agregar cliente");
+    res.json({ cliente_id: result.rows[0].cliente_id, nombre, apellido });
   });
 });
 
-// Ruta para actualizar un cliente
 router.put("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
   const { nombre, apellido } = req.body;
-  const query =
-    "UPDATE clientes SET nombre = $1, apellido = $2 WHERE cliente_id = $3";
-  connection.query(query, [nombre, apellido, id], (err, result) => {
-    if (err) {
-      console.error("Error al actualizar cliente:", err);
-      res.status(500).send("Error al actualizar cliente");
-      return;
+  const sessionId = res.locals.session_id;
+
+  connection.query(
+    "SELECT session_id FROM clientes WHERE cliente_id = $1",
+    [id],
+    (err, result) => {
+      if (err) return res.status(500).send("Error interno");
+      const cliente = result.rows[0];
+      if (!cliente) return res.status(404).send("Cliente no encontrado");
+      if (cliente.session_id === null)
+        return res.status(403).send("No se puede editar clientes base");
+      if (cliente.session_id !== sessionId)
+        return res.status(403).send("No autorizado");
+
+      const query =
+        "UPDATE clientes SET nombre = $1, apellido = $2 WHERE cliente_id = $3";
+      connection.query(query, [nombre, apellido, id], (err) => {
+        if (err) return res.status(500).send("Error al actualizar cliente");
+        res.sendStatus(200);
+      });
     }
-    if (result.rowCount === 0) {
-      res.status(404).send("Cliente no encontrado");
-    } else {
-      res.sendStatus(200);
-    }
-  });
+  );
 });
 
-// Ruta para eliminar un cliente
 router.delete("/:id", limitarAccionesDemo, (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM clientes WHERE cliente_id = $1";
-  connection.query(query, [id], (err, result) => {
-    if (err) {
-      console.error("Error al eliminar cliente:", err);
-      res.status(500).send("Error al eliminar cliente");
-      return;
+  const sessionId = res.locals.session_id;
+
+  connection.query(
+    "SELECT session_id FROM clientes WHERE cliente_id = $1",
+    [id],
+    (err, result) => {
+      if (err) return res.status(500).send("Error interno");
+      const cliente = result.rows[0];
+      if (!cliente) return res.status(404).send("Cliente no encontrado");
+      if (cliente.session_id === null)
+        return res.status(403).send("No se puede eliminar clientes base");
+      if (cliente.session_id !== sessionId)
+        return res.status(403).send("No autorizado");
+
+      connection.query(
+        "DELETE FROM clientes WHERE cliente_id = $1",
+        [id],
+        (err) => {
+          if (err) return res.status(500).send("Error al eliminar cliente");
+          res.sendStatus(200);
+        }
+      );
     }
-    res.sendStatus(200);
-  });
+  );
 });
 
 module.exports = router;
