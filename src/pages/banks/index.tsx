@@ -69,7 +69,8 @@ const Banks: React.FC = () => {
           toast.success("Banco eliminado con éxito");
         })
         .catch((error) => {
-          const msg = error.response?.data || "Error al eliminar el banco";
+          const msg =
+            error.response?.data?.error || "Error al eliminar el banco";
           toast.error(msg);
         });
     }
@@ -106,7 +107,8 @@ const Banks: React.FC = () => {
         toast.success("Banco actualizado con éxito");
       })
       .catch((error) => {
-        const msg = error.response?.data || "Error al actualizar el banco";
+        const msg =
+          error.response?.data?.error || "Error al actualizar el banco";
         toast.error(msg);
       });
   };
