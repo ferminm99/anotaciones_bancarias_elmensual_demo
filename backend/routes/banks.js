@@ -13,8 +13,6 @@ router.get("/", (req, res) => {
       return res.status(500).send("Error al obtener bancos");
     }
 
-    console.log("Resultados de bancos:", results);
-
     if (!results || !results.rows) {
       return res.status(500).send("Formato inesperado de respuesta");
     }

@@ -7,6 +7,7 @@ const banksRoutes = require("./routes/banks");
 const clientsRoutes = require("./routes/clients");
 const chequesRoutes = require("./routes/cheques");
 // const authRoutes = require("./routes/auth");
+const limitarAccionesDemo = require("./middlewares/limitarAccionesDemo");
 const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones
 
@@ -27,10 +28,10 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 // Rutas
-app.use("/transacciones", transactionsRoutes);
-app.use("/bancos", banksRoutes);
-app.use("/clientes", clientsRoutes);
-app.use("/cheques", chequesRoutes);
+app.use("/transacciones", limitarAccionesDemo, transactionsRoutes);
+app.use("/bancos", limitarAccionesDemo, banksRoutes);
+app.use("/clientes", limitarAccionesDemo, clientsRoutes);
+app.use("/cheques", limitarAccionesDemo, chequesRoutes);
 // app.use("/auth", authRoutes);
 
 // Aquí puedes agregar un log para confirmar que las rutas se han registrado
