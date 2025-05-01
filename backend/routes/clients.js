@@ -2,10 +2,9 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const authenticateToken = require("../middleware/auth");
 
 // Ruta para obtener todos los clientes
-router.get("/", authenticateToken, (req, res) => {
+router.get("/", (req, res) => {
   const query = "SELECT * FROM clientes";
   connection.query(query, (err, results) => {
     if (err) {
@@ -18,7 +17,7 @@ router.get("/", authenticateToken, (req, res) => {
 });
 
 // Ruta para agregar un cliente
-router.post("/", authenticateToken, (req, res) => {
+router.post("/", (req, res) => {
   const { nombre, apellido } = req.body;
   const query =
     "INSERT INTO clientes (nombre, apellido) VALUES ($1, $2) RETURNING cliente_id";
@@ -37,7 +36,7 @@ router.post("/", authenticateToken, (req, res) => {
 });
 
 // Ruta para actualizar un cliente
-router.put("/:id", authenticateToken, (req, res) => {
+router.put("/:id", (req, res) => {
   const { id } = req.params;
   const { nombre, apellido } = req.body;
   const query =
@@ -57,7 +56,7 @@ router.put("/:id", authenticateToken, (req, res) => {
 });
 
 // Ruta para eliminar un cliente
-router.delete("/:id", authenticateToken, (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM clientes WHERE cliente_id = $1";
   connection.query(query, [id], (err, result) => {

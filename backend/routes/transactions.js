@@ -1,10 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const authenticateToken = require("../middleware/auth");
 
 // Ruta para obtener todas las transacciones
-router.get("/", authenticateToken, (req, res) => {
+router.get("/", (req, res) => {
   const query = `
     SELECT 
       transacciones.transaccion_id AS transaccion_id, 
@@ -34,7 +33,7 @@ router.get("/", authenticateToken, (req, res) => {
 });
 
 // Ruta para agregar una nueva transacción
-router.post("/", authenticateToken, (req, res) => {
+router.post("/", (req, res) => {
   const {
     fecha,
     nombre_cliente,
@@ -229,7 +228,7 @@ router.post("/", authenticateToken, (req, res) => {
   }
 });
 
-router.put("/:transaccion_id", authenticateToken, (req, res) => {
+router.put("/:transaccion_id", (req, res) => {
   const { transaccion_id } = req.params;
   const {
     fecha,
@@ -417,7 +416,7 @@ router.put("/:transaccion_id", authenticateToken, (req, res) => {
 });
 
 // Ruta para eliminar una transacción
-router.delete("/:id", authenticateToken, (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
 
   const query =
