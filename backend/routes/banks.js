@@ -9,9 +9,15 @@ router.get("/", (req, res) => {
   connection.query(query, (err, results) => {
     if (err) {
       console.error("Error al obtener bancos:", err);
-      res.status(500).send("Error al obtener bancos");
-      return;
+      return res.status(500).send("Error al obtener bancos");
     }
+
+    console.log("Resultados de bancos:", results);
+
+    if (!results || !results.rows) {
+      return res.status(500).send("Formato inesperado de respuesta");
+    }
+
     res.json(results.rows);
   });
 });
