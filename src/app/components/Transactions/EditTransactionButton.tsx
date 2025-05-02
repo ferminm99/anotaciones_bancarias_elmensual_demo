@@ -360,9 +360,9 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
               <FormControl fullWidth margin="normal">
                 <TextField
                   label="Número de Cheque"
-                  type="number" // Tipo número
-                  value={numeroCheque || ""}
-                  onChange={(e) => setNumeroCheque(Number(e.target.value))}
+                  type="number"
+                  value={numeroCheque}
+                  onChange={(e) => setNumeroCheque(e.target.value)}
                 />
               </FormControl>
             )}
