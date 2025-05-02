@@ -24,7 +24,6 @@ const limitarAccionesDemo = async (req, res, next) => {
        WHERE session_id = $1 AND accion = $2 AND fecha::date = CURRENT_DATE`,
       [sessionId, accion]
     );
-
     const cantidad = parseInt(rows[0].count, 10);
 
     if (cantidad >= MAX_ACCIONES_POR_DIA) {
