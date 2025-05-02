@@ -8,7 +8,7 @@ const clientsRoutes = require("./routes/clients");
 const chequesRoutes = require("./routes/cheques");
 // const authRoutes = require("./routes/auth");
 const demoResetRoutes = require("./routes/reset");
-const limitarAccionesDemo = require("./middleware/limitarAccionesDemo");
+// const limitarAccionesDemo = require("./middleware/limitarAccionesDemo");
 const setSessionId = require("./middleware/setSessionId");
 const cron = require("node-cron");
 const db = require("./db");
@@ -51,10 +51,10 @@ app.options("*", cors(corsOptions));
 
 // Rutas
 app.use(setSessionId);
-app.use("/transacciones", limitarAccionesDemo, transactionsRoutes);
-app.use("/bancos", limitarAccionesDemo, banksRoutes);
-app.use("/clientes", limitarAccionesDemo, clientsRoutes);
-app.use("/cheques", limitarAccionesDemo, chequesRoutes);
+app.use("/transacciones", transactionsRoutes);
+app.use("/bancos", banksRoutes);
+app.use("/clientes", clientsRoutes);
+app.use("/cheques", chequesRoutes);
 // app.use("/auth", authRoutes);
 app.use("/demo", demoResetRoutes);
 
