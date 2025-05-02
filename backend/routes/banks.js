@@ -79,6 +79,12 @@ router.put("/:id", limitarAccionesDemo, (req, res) => {
     const banco = result.rows[0];
     if (!banco) return res.status(404).json({ error: "Banco no encontrado" });
 
+    console.log("Comparando session_id:", {
+      bancoSession: banco.session_id,
+      currentSession: sessionId,
+      iguales: banco.session_id === sessionId,
+    });
+
     if (banco.session_id === null)
       return res
         .status(403)
