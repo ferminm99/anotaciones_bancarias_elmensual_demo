@@ -1,13 +1,31 @@
-import useDemoCounter from "../hooks/useDemoCounter";
+"use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const DemoCounter = () => {
-  const restantes = useDemoCounter();
+  const [accionesRestantes, setAccionesRestantes] = useState<number | null>(
+    null
+  );
+  const [error, setError] = useState(false);
 
-  if (restantes === null) return null; // No mostrar nada si no hay info
+  useEffect(() => {
+    axios
+      .get("/demo/acciones-restantes")
+      .then((res) => {
+        setAccionesRestantes(res.data.restantes);
+      })
+      .catch(() => setError(true));
+  }, []);
+
+  if (error || accionesRestantes === null) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 bg-yellow-100 border border-yellow-500 text-yellow-800 px-4 py-2 rounded shadow-md z-50">
-      Acciones restantes (modo demo): <strong>{restantes}</strong>
+    <div
+      className={`fixed bottom-4 right-4 z-50 px-4 py-2 text-white rounded shadow-lg text-sm
+        ${accionesRestantes <= 5 ? "bg-red-600" : "bg-gray-800"}`}
+    >
+      Modo DEMO – Acciones restantes: {accionesRestantes}
     </div>
   );
 };
