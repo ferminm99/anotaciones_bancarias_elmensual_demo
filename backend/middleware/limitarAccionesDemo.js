@@ -37,10 +37,15 @@ const limitarAccionesDemo = async (req, res, next) => {
       `INSERT INTO acciones_demo (ip, accion, session_id) VALUES ($1, $2, $3)`,
       [ip, accion, sessionId]
     );
+    console.log(
+      "Seteando header x-acciones-restantes:",
+      Math.max(0, MAX_ACCIONES_POR_DIA - cantidad - 1)
+    );
     res.setHeader(
       "x-acciones-restantes",
       Math.max(0, MAX_ACCIONES_POR_DIA - cantidad - 1)
     );
+
     next();
   } catch (err) {
     console.error("Error en limitarAccionesDemo:", err);
