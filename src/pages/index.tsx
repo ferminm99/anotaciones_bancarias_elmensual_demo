@@ -17,7 +17,7 @@ import EditTransactionButton from "../app/components/Transactions/EditTransactio
 import { Transaction, Bank, CreateTransaction, Cliente } from "../app/types";
 import { Pagination } from "@mui/material";
 import toast from "react-hot-toast";
-import useDemoCounter from "@/app/hooks/useDemoCounter";
+import { restarUnoGlobal } from "@/app/hooks/useDemoCounter";
 
 const Home: React.FC = () => {
   interface ApiResponse<T> {
@@ -43,7 +43,6 @@ const Home: React.FC = () => {
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false); // Controlamos la apertura del diálogo de edición
   const [currentPage, setCurrentPage] = useState<number>(1);
   const transactionsPerPage = 10;
-  const { restarUno } = useDemoCounter();
 
   const fetchBanks = () => {
     getBanks()
@@ -158,15 +157,13 @@ const Home: React.FC = () => {
         };
 
         setTransactions((prev) => [newTransaction, ...prev]);
-        setFilteredTransactions((prev) =>
-          [newTransaction, ...prev].filter(
-            (transaction) => transaction.banco_id === selectedBank?.banco_id
-          )
-        );
-        restarUno();
-        toast.success("Transacción agregada con éxito");
 
-        // Si se creó un cliente nuevo, actualizamos la lista global de clientes
+        // Solo agregamos a filteredTransactions si matchea con el banco seleccionado
+        if (selectedBank && newTransaction.banco_id === selectedBank.banco_id) {
+          setFilteredTransactions((prev) => [newTransaction, ...prev]);
+        }
+
+        // Cliente nuevo, lo agregamos
         if (data.cliente_id === null && response.data.cliente_id) {
           const nuevoCliente: Cliente = {
             cliente_id: response.data.cliente_id,
@@ -174,11 +171,12 @@ const Home: React.FC = () => {
             apellido:
               response.data.nombre_cliente?.split(" ").slice(1).join(" ") || "",
           };
-
           setClientes((prev) => [...prev, nuevoCliente]);
         }
 
-        fetchBanks();
+        fetchBanks(); // esto si lo dejamos porque cambia el saldo
+        restarUnoGlobal(); // contador
+        toast.success("Transacción agregada con éxito");
         return response.data;
       })
       .catch((error) => {
@@ -201,26 +199,26 @@ const Home: React.FC = () => {
   ): Promise<ApiResponse<Transaction>> => {
     return updateTransaction(data.transaccion_id, data)
       .then((response) => {
-        // Actualiza las transacciones en el estado local
-        const updatedTransaction = response.data;
+        const updated = {
+          ...response.data,
+          nombre_cliente: response.data.nombre_cliente || "",
+          nombre_banco:
+            banks.find((b) => b.banco_id === response.data.banco_id)?.nombre ||
+            "SIN BANCO",
+        };
 
-        setTransactions((prevTransactions) =>
-          prevTransactions.map((trans) =>
-            trans.transaccion_id === data.transaccion_id
-              ? updatedTransaction
-              : trans
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.transaccion_id === data.transaccion_id ? updated : tx
           )
         );
 
-        setFilteredTransactions((prevFiltered) =>
-          prevFiltered.map((trans) =>
-            trans.transaccion_id === data.transaccion_id
-              ? updatedTransaction
-              : trans
+        setFilteredTransactions((prev) =>
+          prev.map((tx) =>
+            tx.transaccion_id === data.transaccion_id ? updated : tx
           )
         );
 
-        // Verifica si el cliente existe en la lista global de clientes y agrégalo si no está
         if (response.data.cliente_id) {
           const nuevoCliente: Cliente = {
             cliente_id: response.data.cliente_id,
@@ -229,18 +227,17 @@ const Home: React.FC = () => {
               response.data.nombre_cliente?.split(" ").slice(1).join(" ") || "",
           };
 
-          setClientes((prevClientes) => {
-            const existe = prevClientes.some(
-              (cliente) => cliente.cliente_id === nuevoCliente.cliente_id
-            );
-            return existe ? prevClientes : [...prevClientes, nuevoCliente];
-          });
+          setClientes((prev) =>
+            prev.some((c) => c.cliente_id === nuevoCliente.cliente_id)
+              ? prev
+              : [...prev, nuevoCliente]
+          );
         }
 
-        fetchBanks(); // Actualiza los bancos después de modificar la transacción
-        restarUno();
+        fetchBanks(); // saldo cambió
+        restarUnoGlobal();
         toast.success("Transacción actualizada con éxito");
-        return updatedTransaction; // Retorna la transacción actualizada
+        return updated;
       })
       .catch((error) => {
         toast.error(
@@ -299,7 +296,7 @@ const Home: React.FC = () => {
 
           setOpenConfirmDialog(false);
           fetchBanks(); // Actualiza los bancos
-          restarUno();
+          restarUnoGlobal();
           toast.success("Transacción eliminada con éxito");
         })
         .catch((error) => {
