@@ -3,11 +3,10 @@ const db = require("../db");
 const MAX_ACCIONES_POR_DIA = 30;
 
 const limitarAccionesDemo = async (req, res, next) => {
-  if (process.env.DEMO_MODE !== "true") {
-    return next(); // Si no es modo demo, seguimos normalmente
-  }
+  if (process.env.DEMO_MODE !== "true") return next();
 
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const sessionId = res.locals.session_id;
   const accion =
     req.method === "POST"
       ? "add"
@@ -22,8 +21,8 @@ const limitarAccionesDemo = async (req, res, next) => {
   try {
     const { rows } = await db.query(
       `SELECT COUNT(*) FROM acciones_demo 
-       WHERE ip = $1 AND accion = $2 AND fecha::date = CURRENT_DATE`,
-      [ip, accion]
+       WHERE session_id = $1 AND accion = $2 AND fecha::date = CURRENT_DATE`,
+      [sessionId, accion]
     );
 
     const cantidad = parseInt(rows[0].count, 10);
@@ -34,11 +33,10 @@ const limitarAccionesDemo = async (req, res, next) => {
       });
     }
 
-    // Guardar acción
-    await db.query(`INSERT INTO acciones_demo (ip, accion) VALUES ($1, $2)`, [
-      ip,
-      accion,
-    ]);
+    await db.query(
+      `INSERT INTO acciones_demo (ip, accion, session_id) VALUES ($1, $2, $3)`,
+      [ip, accion, sessionId]
+    );
 
     next();
   } catch (err) {

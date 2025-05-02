@@ -4,6 +4,7 @@ import "../app/globals.css";
 import Sidebar from "../app/components/Layout/Sidebar";
 import "/dist/output.css";
 import { Toaster } from "react-hot-toast";
+import DemoCounter from "@/app/components/DemoCounter";
 
 function MyApp({ Component, pageProps }: AppProps) {
   // const router = useRouter();
@@ -59,6 +60,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         </div>
       )}
       <Component {...pageProps} />
+      <DemoCounter />
     </Sidebar>
   );
 }
