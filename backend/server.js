@@ -10,6 +10,25 @@ const chequesRoutes = require("./routes/cheques");
 const demoResetRoutes = require("./routes/reset");
 const limitarAccionesDemo = require("./middleware/limitarAccionesDemo");
 const setSessionId = require("./middleware/setSessionId");
+const cron = require("node-cron");
+const db = require("./db");
+
+cron.schedule("0 0 * * *", async () => {
+  console.log("Ejecutando reset demo automático...");
+
+  try {
+    // Reutilizamos el código de tu reset-demo, pero sin router
+    await db.query(`DELETE FROM transacciones WHERE session_id IS NOT NULL`);
+    await db.query(`DELETE FROM cheques WHERE session_id IS NOT NULL`);
+    await db.query(`DELETE FROM clientes WHERE session_id IS NOT NULL`);
+    await db.query(`DELETE FROM bancos WHERE session_id IS NOT NULL`);
+    await db.query(`DELETE FROM acciones_demo`);
+
+    console.log("Reset automático exitoso.");
+  } catch (err) {
+    console.error("Error en el reset automático:", err);
+  }
+});
 
 const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones

@@ -1,33 +1,35 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api"; // ⚠️ importá tu instancia
 
 const useDemoCounter = () => {
-  const [restantes, setRestantes] = useState<number | null>(null);
+  const [accionesRestantes, setAccionesRestantes] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
+    const interceptor = api.interceptors.response.use(
       (response) => {
-        const headerValue = response.headers["x-acciones-restantes"];
-        if (headerValue !== undefined) {
-          setRestantes(parseInt(headerValue, 10));
+        const restantes = response.headers["x-acciones-restantes"];
+        if (restantes !== undefined) {
+          setAccionesRestantes(parseInt(restantes, 10));
         }
         return response;
       },
       (error) => {
-        const headerValue = error?.response?.headers?.["x-acciones-restantes"];
-        if (headerValue !== undefined) {
-          setRestantes(parseInt(headerValue, 10));
+        const restantes = error.response?.headers?.["x-acciones-restantes"];
+        if (restantes !== undefined) {
+          setAccionesRestantes(parseInt(restantes, 10));
         }
         return Promise.reject(error);
       }
     );
 
     return () => {
-      axios.interceptors.response.eject(interceptor);
+      api.interceptors.response.eject(interceptor);
     };
   }, []);
 
-  return restantes;
+  return accionesRestantes;
 };
 
 export default useDemoCounter;

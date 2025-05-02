@@ -146,3 +146,5 @@ export const validateToken = async (): Promise<boolean> => {
     return false; // El token no es válido
   }
 };
+
+export default api;

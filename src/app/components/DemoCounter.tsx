@@ -1,27 +1,9 @@
 "use client";
 
-import useDemoCounter from "../hooks/useDemoCounter";
-import { useEffect, useState } from "react";
-import { getAccionesRestantes } from "../services/api";
+import useDemoCounter from "@/app/hooks/useDemoCounter";
 
 const DemoCounter = () => {
-  const accionesDesdeHeader = useDemoCounter();
-  const [accionesRestantes, setAccionesRestantes] = useState<number | null>(
-    null
-  );
-
-  useEffect(() => {
-    getAccionesRestantes()
-      .then((res) => setAccionesRestantes(res.data.restantes))
-      .catch(() => setAccionesRestantes(null));
-  }, []);
-
-  // Actualizar cuando cambia el header
-  useEffect(() => {
-    if (accionesDesdeHeader !== null) {
-      setAccionesRestantes(accionesDesdeHeader);
-    }
-  }, [accionesDesdeHeader]);
+  const accionesRestantes = useDemoCounter();
 
   if (accionesRestantes === null) return null;
 
