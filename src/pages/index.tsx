@@ -16,6 +16,7 @@ import ConfirmDialog from "../app/components/ConfirmDialog";
 import EditTransactionButton from "../app/components/Transactions/EditTransactionButton"; // Importamos el nuevo botón
 import { Transaction, Bank, CreateTransaction, Cliente } from "../app/types";
 import { Pagination } from "@mui/material";
+import toast from "react-hot-toast";
 
 const Home: React.FC = () => {
   interface ApiResponse<T> {
@@ -161,6 +162,8 @@ const Home: React.FC = () => {
           )
         );
 
+        toast.success("Transacción agregada con éxito");
+
         // Si se creó un cliente nuevo, actualizamos la lista global de clientes
         if (data.cliente_id === null && response.data.cliente_id) {
           const nuevoCliente: Cliente = {
@@ -177,7 +180,9 @@ const Home: React.FC = () => {
         return response.data;
       })
       .catch((error) => {
-        console.error("Error al agregar la transacción:", error);
+        toast.error(
+          error.response?.data?.error || "Error al agregar la transacción"
+        );
         throw error;
       });
   };
@@ -231,11 +236,14 @@ const Home: React.FC = () => {
         }
 
         fetchBanks(); // Actualiza los bancos después de modificar la transacción
+        toast.success("Transacción actualizada con éxito");
         return updatedTransaction; // Retorna la transacción actualizada
       })
       .catch((error) => {
-        console.error("Error al actualizar la transacción:", error);
-        throw error; // Propaga el error para manejarlo adecuadamente
+        toast.error(
+          error.response?.data?.error || "Error al actualizar la transacción"
+        );
+        throw error;
       });
   };
 
@@ -288,10 +296,16 @@ const Home: React.FC = () => {
 
           setOpenConfirmDialog(false);
           fetchBanks(); // Actualiza los bancos
+          toast.success("Transacción eliminada con éxito");
         })
-        .catch((error) =>
-          console.error("Error al eliminar la transacción:", error)
-        );
+        .catch((error) => {
+          console.error("Error al eliminar la transacción:", error);
+          toast.error(
+            error.response?.data?.error ||
+              error.response?.data ||
+              "Error al eliminar"
+          );
+        });
     }
   };
 

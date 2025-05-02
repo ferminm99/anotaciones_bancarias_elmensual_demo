@@ -5,6 +5,7 @@ import AddClienteButton from "../../app/components/Clients/ClientsButtonAdd";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import { Cliente } from "../../app/types";
 import EditClientButton from "../../app/components/Clients/ClientEditButton";
+import { toast } from "react-hot-toast";
 
 const Clientes: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -29,8 +30,12 @@ const Clientes: React.FC = () => {
       .then((response) => {
         setClientes((prev) => [...prev, response.data]);
         setFilteredClientes((prev) => [...prev, response.data]);
+        toast.success("Cliente agregado con éxito");
       })
-      .catch((error) => console.error("Error al agregar cliente:", error));
+      .catch((error) => {
+        const msg = error.response?.data?.error || "Error al agregar cliente";
+        toast.error(msg);
+      });
   };
 
   const confirmDeleteCliente = (id: number) => {
@@ -48,10 +53,13 @@ const Clientes: React.FC = () => {
           setClientes(updatedClientes);
           setFilteredClientes(updatedClientes);
           setOpenConfirmDialog(false);
+          toast.success("Cliente eliminado con éxito");
         })
-        .catch((error) =>
-          console.error("Error al eliminar el cliente:", error)
-        );
+        .catch((error) => {
+          const msg =
+            error.response?.data?.error || "Error al eliminar cliente";
+          toast.error(msg);
+        });
     }
   };
 
@@ -62,19 +70,19 @@ const Clientes: React.FC = () => {
   };
 
   const handleUpdateCliente = (data: Cliente) => {
-    setClientes((prevClientes) => {
-      const updatedClientes = prevClientes.map((cli) =>
+    setClientes((prevClientes) =>
+      prevClientes.map((cli) =>
         cli.cliente_id === data.cliente_id ? data : cli
-      );
-      return updatedClientes;
-    });
+      )
+    );
 
-    setFilteredClientes((prevFiltered) => {
-      const updatedFiltered = prevFiltered.map((cli) =>
+    setFilteredClientes((prevFiltered) =>
+      prevFiltered.map((cli) =>
         cli.cliente_id === data.cliente_id ? data : cli
-      );
-      return updatedFiltered;
-    });
+      )
+    );
+
+    toast.success("Cliente actualizado con éxito");
 
     setClienteToEdit(null);
     setOpenEditDialog(false);
