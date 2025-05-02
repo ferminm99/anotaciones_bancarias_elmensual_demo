@@ -7,12 +7,19 @@ import { getSessionId } from "../../utils/session";
 // });
 
 //Configura Axios con la baseURL
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
-  headers: {
-    "x-session-id": getSessionId(),
-  },
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
 });
+
+// Interceptor para agregar el session_id **solo en el navegador**
+if (typeof window !== "undefined") {
+  api.interceptors.request.use((config) => {
+    const sessionId = getSessionId();
+    config.headers["x-session-id"] = sessionId;
+    return config;
+  });
+}
 
 console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
 
