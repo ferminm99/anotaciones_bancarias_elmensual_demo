@@ -80,6 +80,7 @@ const Banks: React.FC = () => {
   const handleEditBank = (bank: Bank) => {
     setBankToEdit(bank);
     setOpenEditDialog(true);
+    console.log(openEditDialog);
   };
 
   const handleUpdateBank = (data: Bank) => {
