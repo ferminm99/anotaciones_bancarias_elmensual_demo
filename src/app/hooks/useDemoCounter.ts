@@ -16,6 +16,7 @@ const useDemoCounter = () => {
       (response) => {
         const header = response.headers["x-acciones-restantes"];
         if (header !== undefined) {
+          console.log("Recibido x-acciones-restantes:", header); // 👈 VER ESTO
           setRestantes(parseInt(header, 10));
         }
         return response;
