@@ -103,6 +103,10 @@ export const login = async (
   }
 };
 
+export const getAccionesRestantes = () => {
+  return api.get("/demo/acciones-restantes");
+};
+
 //Interceptor para proteger solicitudes
 // api.interceptors.request.use((config) => {
 //   const token = localStorage.getItem("token");
