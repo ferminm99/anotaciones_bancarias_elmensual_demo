@@ -7,6 +7,7 @@ import { Bank } from "../../app/types";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
 import { updateBank } from "../../app/services/api"; // Importa la función que realiza la solicitud al backend
 import toast from "react-hot-toast";
+import DemoCounter from "@/app/components/DemoCounter";
 
 const Banks: React.FC = () => {
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -162,6 +163,7 @@ const Banks: React.FC = () => {
           onClose={() => setBankToEdit(null)}
         />
       )}
+      <DemoCounter />
     </div>
   );
 };
