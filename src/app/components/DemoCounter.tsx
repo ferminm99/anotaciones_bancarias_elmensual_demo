@@ -11,9 +11,7 @@ const DemoCounter = () => {
 
   useEffect(() => {
     getAccionesRestantes()
-      .then((res) => {
-        setAccionesRestantes(res.data.restantes);
-      })
+      .then((res) => setAccionesRestantes(res.data.restantes))
       .catch(() => setError(true));
   }, []);
 

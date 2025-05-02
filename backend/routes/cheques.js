@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 
 // Obtener todos los cheques
 router.get("/", (req, res) => {
@@ -18,7 +17,7 @@ router.get("/", (req, res) => {
 });
 
 // Agregar un nuevo cheque
-router.post("/", limitarAccionesDemo, (req, res) => {
+router.post("/", (req, res) => {
   const { numero } = req.body;
   const sessionId = res.locals.session_id;
 
@@ -55,7 +54,7 @@ router.post("/", limitarAccionesDemo, (req, res) => {
 });
 
 // Actualizar un cheque existente
-router.put("/:id", limitarAccionesDemo, (req, res) => {
+router.put("/:id", (req, res) => {
   const { id } = req.params;
   const { numero } = req.body;
   const sessionId = res.locals.session_id;
@@ -100,7 +99,7 @@ router.put("/:id", limitarAccionesDemo, (req, res) => {
 });
 
 // Eliminar un cheque existente
-router.delete("/:id", limitarAccionesDemo, (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
   const sessionId = res.locals.session_id;
 

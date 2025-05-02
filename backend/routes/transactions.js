@@ -2,7 +2,6 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 
 // GET: obtener transacciones visibles para la sesión
 router.get("/", (req, res) => {
@@ -38,7 +37,7 @@ router.get("/", (req, res) => {
 });
 
 // POST: agregar transacción
-router.post("/", limitarAccionesDemo, (req, res) => {
+router.post("/", (req, res) => {
   const {
     fecha,
     nombre_cliente,
@@ -185,7 +184,7 @@ router.post("/", limitarAccionesDemo, (req, res) => {
 });
 
 // PUT: actualizar transacción si es del usuario
-router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
+router.put("/:transaccion_id", (req, res) => {
   const { transaccion_id } = req.params;
   const {
     fecha,
@@ -348,7 +347,7 @@ router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
 });
 
 // DELETE: eliminar transacción si es del usuario
-router.delete("/:id", limitarAccionesDemo, (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
   const sessionId = res.locals.session_id;
 

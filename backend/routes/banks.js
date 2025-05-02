@@ -2,7 +2,6 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 
 // GET bancos (solo los visibles para el usuario)
 router.get("/", (req, res) => {
@@ -18,7 +17,7 @@ router.get("/", (req, res) => {
 });
 
 // POST banco
-router.post("/", limitarAccionesDemo, (req, res) => {
+router.post("/", (req, res) => {
   const { nombre, saldo_total } = req.body;
   const sessionId = res.locals.session_id;
 
@@ -64,7 +63,7 @@ router.post("/", limitarAccionesDemo, (req, res) => {
 });
 
 // PUT banco
-router.put("/:id", limitarAccionesDemo, (req, res) => {
+router.put("/:id", (req, res) => {
   const { id } = req.params;
   const { nombre, saldo_total } = req.body;
   const sessionId = res.locals.session_id;
@@ -106,7 +105,7 @@ router.put("/:id", limitarAccionesDemo, (req, res) => {
 });
 
 // DELETE banco
-router.delete("/:id", limitarAccionesDemo, (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
   const sessionId = res.locals.session_id;
 

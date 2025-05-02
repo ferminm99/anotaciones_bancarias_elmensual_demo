@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
-const limitarAccionesDemo = require("../middleware/limitarAccionesDemo");
 
 // Obtener todos los clientes
 router.get("/", (req, res) => {
@@ -18,7 +17,7 @@ router.get("/", (req, res) => {
 });
 
 // Agregar un nuevo cliente
-router.post("/", limitarAccionesDemo, (req, res) => {
+router.post("/", (req, res) => {
   const { nombre, apellido } = req.body;
   const sessionId = res.locals.session_id;
 
@@ -59,7 +58,7 @@ router.post("/", limitarAccionesDemo, (req, res) => {
 });
 
 // Actualizar un cliente existente
-router.put("/:id", limitarAccionesDemo, (req, res) => {
+router.put("/:id", (req, res) => {
   const { id } = req.params;
   const { nombre, apellido } = req.body;
   const sessionId = res.locals.session_id;
@@ -104,7 +103,7 @@ router.put("/:id", limitarAccionesDemo, (req, res) => {
   });
 });
 // Eliminar un cliente existente
-router.delete("/:id", limitarAccionesDemo, (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
   const sessionId = res.locals.session_id;
 
