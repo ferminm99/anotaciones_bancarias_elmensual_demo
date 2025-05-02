@@ -149,11 +149,14 @@ const Home: React.FC = () => {
           (banco) => banco.banco_id === response.data.banco_id
         );
 
+        console.log("ADD TRANSACTION:");
+        console.log(response.data);
         const newTransaction: Transaction = {
           ...response.data,
           nombre_cliente: response.data.nombre_cliente || "",
           nombre_banco: bancoEncontrado ? bancoEncontrado.nombre : "SIN BANCO",
           numero_cheque: response.data.numero_cheque || null,
+          cheque_id: response.data.cheque_id || null,
         };
 
         setTransactions((prev) => [newTransaction, ...prev]);
