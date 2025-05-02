@@ -68,9 +68,9 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
 
       if (
         transactionToEdit.tipo === "pago_cheque" &&
-        transactionToEdit.cheque_id
+        transactionToEdit.numero_cheque
       ) {
-        setNumeroCheque(transactionToEdit.cheque_id);
+        setNumeroCheque(Number(transactionToEdit.numero_cheque));
       }
     }
   }, [transactionToEdit, banks, clientes]);

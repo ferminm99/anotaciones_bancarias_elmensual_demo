@@ -12,28 +12,25 @@ import Paper from "@mui/material/Paper";
 import { Transaction } from "../../types";
 import { formatNumber } from "../../../utils/formatNumber";
 
-// Mapa de clases Tailwind para los diferentes tipos de transacción
+// Mapa de colores por tipo
 const tipoColorMap: { [key: string]: string } = {
-  cheque_deposito: "#2c7a7b", // Verde oscuro
-  deposito_efectivo: "#2c7a7b", // Verde oscuro
-  interdeposito: "#2c7a7b", // Verde oscuro
-  transferencia: "#c53030", // Rojo oscuro
-  retiro_cheque: "#2b6cb0", // Azul oscuro
-  pago_cheque: "#c53030", // Rojo oscuro
-  impuesto: "#c53030", // Rojo oscuro
-  gastos_mantenimiento: "#c53030", // Rojo oscuro
-  retiro_efectivo: "#c53030", // Rojo oscuro
+  cheque_deposito: "#2c7a7b",
+  deposito_efectivo: "#2c7a7b",
+  interdeposito: "#2c7a7b",
+  transferencia: "#c53030",
+  retiro_cheque: "#2b6cb0",
+  pago_cheque: "#c53030",
+  impuesto: "#c53030",
+  gastos_mantenimiento: "#c53030",
+  retiro_efectivo: "#c53030",
 };
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-
-  // Ajustamos la fecha para ignorar el desplazamiento de zona horaria
   const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // Meses van de 0 a 11
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
-
-  return `${day}/${month}/${year}`; // Formato DD/MM/YYYY
+  return `${day}/${month}/${year}`;
 };
 
 const TransactionTable: React.FC<{
@@ -41,6 +38,10 @@ const TransactionTable: React.FC<{
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: number) => void;
 }> = ({ transactions, onEdit, onDelete }) => {
+  const mostrarColumnaCheque = transactions.some(
+    (tx) => tx.numero_cheque !== null && tx.numero_cheque !== undefined
+  );
+
   return (
     <TableContainer component={Paper} className="shadow-lg rounded-lg">
       <Table className="table-auto min-w-full divide-y divide-gray-200">
@@ -55,6 +56,11 @@ const TransactionTable: React.FC<{
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Cliente
             </TableCell>
+            {mostrarColumnaCheque && (
+              <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                Nº Cheque
+              </TableCell>
+            )}
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Monto
             </TableCell>
@@ -84,11 +90,19 @@ const TransactionTable: React.FC<{
                   ? transaction.nombre_cliente.replace("null", "")
                   : " - "}
               </TableCell>
+
+              {mostrarColumnaCheque && (
+                <TableCell className="px-6 py-4 whitespace-nowrap">
+                  {transaction.numero_cheque || "-"}
+                </TableCell>
+              )}
+
               <TableCell className="px-6 py-4 whitespace-nowrap">
                 {transaction.monto !== null
                   ? formatNumber(transaction.monto)
                   : "-"}
               </TableCell>
+
               <TableCell className="px-6 py-4 whitespace-nowrap">
                 <IconButton
                   onClick={() => onEdit(transaction)}

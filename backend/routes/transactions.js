@@ -337,6 +337,7 @@ router.put("/:transaccion_id", limitarAccionesDemo, (req, res) => {
           tipo,
           monto,
           cheque_id: chequeId,
+          numero_cheque: numero_cheque || null,
         });
       });
     }
