@@ -43,7 +43,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
   const [clienteOption, setClienteOption] = useState<string>("existente");
   const [nuevoCliente, setNuevoCliente] = useState<string>("");
-  const [numeroCheque, setNumeroCheque] = useState<number | undefined>(); // Estado para el número de cheque
+  const [numeroCheque, setNumeroCheque] = useState<string>("");
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [displayMonto, setDisplayMonto] = useState<string>("");
 
@@ -182,7 +182,11 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
         nombre_banco: selectedBank?.nombre || "",
         cheque_id:
           transaction.tipo === "pago_cheque"
-            ? Number(numeroCheque) || null
+            ? transaction.cheque_id || null
+            : null,
+        numero_cheque:
+          transaction.tipo === "pago_cheque"
+            ? String(numeroCheque) || null
             : null,
       };
 
