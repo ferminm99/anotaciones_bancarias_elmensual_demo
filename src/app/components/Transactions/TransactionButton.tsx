@@ -23,7 +23,7 @@ interface ApiResponse<T> {
 }
 
 interface TransactionButtonProps {
-  onSubmit: (data: Transaction) => Promise<ApiResponse<CreateTransaction>>;
+  onSubmit: (data: CreateTransaction) => Promise<ApiResponse<Transaction>>;
   banks: Bank[];
   clientes: Cliente[];
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
@@ -57,7 +57,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     fecha: localToday,
     monto: null,
     tipo: "",
-    cheque_id: null, // Añadimos cheque_id inicializado en null
+    numero_cheque: null, // Añadimos cheque_id inicializado en null
   });
   const [displayMonto, setDisplayMonto] = useState<string>(""); // Para visualización
 
@@ -158,7 +158,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       fecha: localToday,
       monto: null,
       tipo: "", // Reiniciar tipo de transacción
-      cheque_id: null, // Reiniciamos cheque_id a null
+      numero_cheque: null, // Reiniciamos cheque_id a null
     });
     setDisplayMonto("");
     setSelectedCliente(null); // Reiniciar cliente seleccionado
@@ -178,23 +178,15 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       displayMonto.replace(/\./g, "").replace(",", ".")
     );
 
-    const dataToSubmit: Transaction = {
-      transaccion_id: 0,
+    const dataToSubmit: CreateTransaction = {
       fecha: transaction.fecha,
       cliente_id:
         clienteOption === "nuevo" ? null : selectedCliente?.cliente_id || null,
-      nombre_cliente:
-        clienteOption === "nuevo"
-          ? nuevoCliente
-          : selectedCliente?.nombre || "",
       tipo: transaction.tipo,
       monto: montoNumerico,
       banco_id: selectedBank?.banco_id || transaction.banco_id,
-      nombre_banco: selectedBank?.nombre || "",
-      cheque_id:
-        transaction.tipo === "pago_cheque"
-          ? Number(numeroCheque) || null
-          : null,
+      numero_cheque:
+        transaction.tipo === "pago_cheque" ? numeroCheque || null : null,
     };
 
     onSubmit(dataToSubmit)

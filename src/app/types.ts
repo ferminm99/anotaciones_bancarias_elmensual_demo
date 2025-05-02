@@ -19,7 +19,7 @@ export interface CreateTransaction {
   monto: number | null;
   tipo: string;
   banco_id: number;
-  cheque_id: number | null;
+  numero_cheque: string | null;
 }
 
 export interface Bank {
