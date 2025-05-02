@@ -1,24 +1,29 @@
 import { useEffect, useState } from "react";
-import api from "../services/api"; // ⚠️ importá tu instancia
+import api from "../services/api";
 
 const useDemoCounter = () => {
-  const [accionesRestantes, setAccionesRestantes] = useState<number | null>(
-    null
-  );
+  const [restantes, setRestantes] = useState<number | null>(null);
 
   useEffect(() => {
+    // Al montar, pedimos las acciones restantes
+    api
+      .get("/demo/acciones-restantes")
+      .then((res) => setRestantes(res.data.restantes))
+      .catch(() => setRestantes(null));
+
+    // Interceptor para actualizar en cada respuesta
     const interceptor = api.interceptors.response.use(
       (response) => {
-        const restantes = response.headers["x-acciones-restantes"];
-        if (restantes !== undefined) {
-          setAccionesRestantes(parseInt(restantes, 10));
+        const header = response.headers["x-acciones-restantes"];
+        if (header !== undefined) {
+          setRestantes(parseInt(header, 10));
         }
         return response;
       },
       (error) => {
-        const restantes = error.response?.headers?.["x-acciones-restantes"];
-        if (restantes !== undefined) {
-          setAccionesRestantes(parseInt(restantes, 10));
+        const header = error?.response?.headers?.["x-acciones-restantes"];
+        if (header !== undefined) {
+          setRestantes(parseInt(header, 10));
         }
         return Promise.reject(error);
       }
@@ -29,7 +34,7 @@ const useDemoCounter = () => {
     };
   }, []);
 
-  return accionesRestantes;
+  return restantes;
 };
 
 export default useDemoCounter;
