@@ -46,7 +46,7 @@ router.post("/", limitarAccionesDemo, (req, res) => {
     tipo,
     monto,
     banco_id,
-    cheque_id,
+    numero_cheque,
   } = req.body;
 
   const sessionId = res.locals.session_id;
@@ -89,10 +89,10 @@ router.post("/", limitarAccionesDemo, (req, res) => {
   }
 
   function manejarChequeYTransaccion(clienteId, nombreCliente) {
-    if (tipo === "pago_cheque" && cheque_id) {
+    if (tipo === "pago_cheque" && numero_cheque) {
       connection.query(
         "SELECT cheque_id FROM cheques WHERE numero = $1",
-        [cheque_id],
+        [numero_cheque],
         (err, result) => {
           if (err)
             return res.status(500).json({ error: "Error al buscar cheque" });
@@ -106,7 +106,7 @@ router.post("/", limitarAccionesDemo, (req, res) => {
           } else {
             connection.query(
               "INSERT INTO cheques (numero, session_id) VALUES ($1, $2) RETURNING cheque_id",
-              [cheque_id, sessionId],
+              [numero_cheque, sessionId],
               (err, result) => {
                 if (err)
                   return res

@@ -20,8 +20,8 @@ const limitarAccionesDemo = async (req, res, next) => {
 
   try {
     const { rows } = await db.query(
-      `SELECT COUNT(*) FROM acciones_demo 
-       WHERE session_id = $1 AND accion = $2 AND fecha::date = CURRENT_DATE`,
+      `SELECT COUNT(*) FROM acciones_demo WHERE session_id = $1 AND fecha::date = CURRENT_DATE
+`,
       [sessionId, accion]
     );
 

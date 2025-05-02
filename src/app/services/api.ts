@@ -15,7 +15,6 @@ const api = axios.create({
 // Interceptor para agregar el session_id **solo en el navegador**
 if (typeof window !== "undefined") {
   api.interceptors.request.use((config) => {
-    console.log("⚡ Interceptor global activado!");
     const sessionId = getSessionId();
     config.headers["x-session-id"] = sessionId;
     return config;
