@@ -70,7 +70,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
         transactionToEdit.tipo === "pago_cheque" &&
         transactionToEdit.numero_cheque
       ) {
-        setNumeroCheque(Number(transactionToEdit.numero_cheque));
+        setNumeroCheque(transactionToEdit.numero_cheque);
       }
     }
   }, [transactionToEdit, banks, clientes]);
@@ -95,7 +95,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
       ) {
         setSelectedClient(null);
         setNuevoCliente("");
-        setNumeroCheque(undefined); // Limpiamos el número de cheque si no es "pago_cheque"
+        setNumeroCheque(""); // Limpiamos el número de cheque si no es "pago_cheque"
       }
     }
   };
