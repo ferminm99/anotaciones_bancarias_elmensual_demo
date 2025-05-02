@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Transaction, CreateTransaction, Bank } from "../types";
-
+import { getSessionId } from "../utils/session";
 // //Configura Axios con la baseURL
 // const api = axios.create({
 //   baseURL: "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
@@ -9,6 +9,9 @@ import { Transaction, CreateTransaction, Bank } from "../types";
 //Configura Axios con la baseURL
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
+  headers: {
+    "x-session-id": getSessionId(),
+  },
 });
 
 console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
