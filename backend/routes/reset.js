@@ -44,4 +44,29 @@ router.post("/reset-demo", async (req, res) => {
   }
 });
 
+router.get("/acciones-restantes", async (req, res) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const sessionId = res.locals.session_id;
+  const DEMO_MODE = process.env.DEMO_MODE === "true";
+
+  if (!DEMO_MODE) return res.json({ restantes: null });
+
+  try {
+    const { rows } = await db.query(
+      `SELECT COUNT(*) FROM acciones_demo 
+         WHERE (ip = $1 OR session_id = $2) 
+           AND fecha::date = CURRENT_DATE`,
+      [ip, sessionId]
+    );
+
+    const cantidad = parseInt(rows[0].count, 10);
+    const restantes = Math.max(0, 30 - cantidad);
+
+    res.json({ restantes });
+  } catch (err) {
+    console.error("Error al obtener acciones restantes:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
 module.exports = router;
