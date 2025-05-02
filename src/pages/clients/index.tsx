@@ -6,6 +6,7 @@ import ConfirmDialog from "../../app/components/ConfirmDialog";
 import { Cliente } from "../../app/types";
 import EditClientButton from "../../app/components/Clients/ClientEditButton";
 import { toast } from "react-hot-toast";
+import useDemoCounter from "@/app/hooks/useDemoCounter";
 
 const Clientes: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -25,11 +26,13 @@ const Clientes: React.FC = () => {
       .catch((error) => console.error("Error al obtener los clientes:", error));
   }, []);
 
+  const { restarUno } = useDemoCounter();
   const handleAddCliente = (data: Omit<Cliente, "cliente_id">) => {
     addCliente(data)
       .then((response) => {
         setClientes((prev) => [...prev, response.data]);
         setFilteredClientes((prev) => [...prev, response.data]);
+        restarUno();
         toast.success("Cliente agregado con éxito");
       })
       .catch((error) => {
@@ -53,6 +56,7 @@ const Clientes: React.FC = () => {
           setClientes(updatedClientes);
           setFilteredClientes(updatedClientes);
           setOpenConfirmDialog(false);
+          restarUno();
           toast.success("Cliente eliminado con éxito");
         })
         .catch((error) => {
@@ -81,7 +85,7 @@ const Clientes: React.FC = () => {
         cli.cliente_id === data.cliente_id ? data : cli
       )
     );
-
+    restarUno();
     toast.success("Cliente actualizado con éxito");
 
     setClienteToEdit(null);

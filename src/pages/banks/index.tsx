@@ -7,6 +7,7 @@ import { Bank } from "../../app/types";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
 import { updateBank } from "../../app/services/api"; // Importa la función que realiza la solicitud al backend
 import toast from "react-hot-toast";
+import useDemoCounter from "@/app/hooks/useDemoCounter";
 
 const Banks: React.FC = () => {
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -16,6 +17,7 @@ const Banks: React.FC = () => {
   const [bankToEdit, setBankToEdit] = useState<Bank | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>(""); // Para el término de búsqueda
+  const { restarUno } = useDemoCounter();
 
   useEffect(() => {
     getBanks()
@@ -43,6 +45,7 @@ const Banks: React.FC = () => {
       .then((response) => {
         setBanks((prev) => [...prev, response.data]);
         setFilteredBanks((prev) => [...prev, response.data]);
+        restarUno();
         toast.success("Banco agregado con éxito");
       })
       .catch((error) => {
@@ -66,6 +69,7 @@ const Banks: React.FC = () => {
           setBanks(updatedBanks);
           setFilteredBanks(updatedBanks);
           setOpenConfirmDialog(false);
+          restarUno();
           toast.success("Banco eliminado con éxito");
         })
         .catch((error) => {
@@ -104,6 +108,7 @@ const Banks: React.FC = () => {
         setFilteredBanks((prev) =>
           prev.map((bnk) => (bnk.banco_id === data.banco_id ? data : bnk))
         );
+        restarUno();
         toast.success("Banco actualizado con éxito");
       })
       .catch((error) => {

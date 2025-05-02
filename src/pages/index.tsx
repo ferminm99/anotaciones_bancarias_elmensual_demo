@@ -17,6 +17,7 @@ import EditTransactionButton from "../app/components/Transactions/EditTransactio
 import { Transaction, Bank, CreateTransaction, Cliente } from "../app/types";
 import { Pagination } from "@mui/material";
 import toast from "react-hot-toast";
+import useDemoCounter from "@/app/hooks/useDemoCounter";
 
 const Home: React.FC = () => {
   interface ApiResponse<T> {
@@ -42,6 +43,7 @@ const Home: React.FC = () => {
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false); // Controlamos la apertura del diálogo de edición
   const [currentPage, setCurrentPage] = useState<number>(1);
   const transactionsPerPage = 10;
+  const { restarUno } = useDemoCounter();
 
   const fetchBanks = () => {
     getBanks()
@@ -161,7 +163,7 @@ const Home: React.FC = () => {
             (transaction) => transaction.banco_id === selectedBank?.banco_id
           )
         );
-
+        restarUno();
         toast.success("Transacción agregada con éxito");
 
         // Si se creó un cliente nuevo, actualizamos la lista global de clientes
@@ -236,6 +238,7 @@ const Home: React.FC = () => {
         }
 
         fetchBanks(); // Actualiza los bancos después de modificar la transacción
+        restarUno();
         toast.success("Transacción actualizada con éxito");
         return updatedTransaction; // Retorna la transacción actualizada
       })
@@ -296,6 +299,7 @@ const Home: React.FC = () => {
 
           setOpenConfirmDialog(false);
           fetchBanks(); // Actualiza los bancos
+          restarUno();
           toast.success("Transacción eliminada con éxito");
         })
         .catch((error) => {
