@@ -3,7 +3,7 @@ const db = require("../db");
 const MAX_ACCIONES_POR_DIA = 30;
 
 const limitarAccionesDemo = async (req, res, next) => {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") {
+  if (process.env.DEMO_MODE !== "true") {
     return next(); // Si no es modo demo, seguimos normalmente
   }
 
@@ -29,11 +29,9 @@ const limitarAccionesDemo = async (req, res, next) => {
     const cantidad = parseInt(rows[0].count, 10);
 
     if (cantidad >= MAX_ACCIONES_POR_DIA) {
-      return res
-        .status(429)
-        .json({
-          error: "Límite diario alcanzado para esta acción en modo DEMO.",
-        });
+      return res.status(429).json({
+        error: "Límite diario alcanzado para esta acción en modo DEMO.",
+      });
     }
 
     // Guardar acción
