@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react"; // ajustá el path si es necesario
+import { getAccionesRestantes } from "../services/api";
 
 const DemoCounter = () => {
   const [accionesRestantes, setAccionesRestantes] = useState<number | null>(
@@ -10,8 +10,7 @@ const DemoCounter = () => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    axios
-      .get("/demo/acciones-restantes")
+    getAccionesRestantes()
       .then((res) => {
         setAccionesRestantes(res.data.restantes);
       })

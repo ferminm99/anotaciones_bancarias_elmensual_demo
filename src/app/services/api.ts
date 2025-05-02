@@ -23,6 +23,10 @@ if (typeof window !== "undefined") {
 
 console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
 
+export const getAccionesRestantes = () => {
+  return api.get("/demo/acciones-restantes");
+};
+
 // Función para obtener transacciones desde el backend
 export const getTransactions = () => {
   return api.get("/transacciones"); // Usa la baseURL y agrega la ruta relativa
@@ -101,10 +105,6 @@ export const login = async (
     console.error("Error en la autenticación:", error);
     throw new Error("Error en la autenticación");
   }
-};
-
-export const getAccionesRestantes = () => {
-  return api.get("/demo/acciones-restantes");
 };
 
 //Interceptor para proteger solicitudes
